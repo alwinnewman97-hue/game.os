@@ -1,31 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { Leaf, Pickaxe, Hammer, GraduationCap, Flame, Building, Users } from 'lucide-react';
-import { useGameStore, calculateCost } from './store/useGameStore';
-import { BUILDINGS, BuildingType, JOBS, JobType } from './gameData';
+import { useGameStore } from './store/useGameStore';
+import { BUILDINGS, JOBS, SEASONS_DATA } from './gameData';
+import { 
+  Flame, 
+  HelpCircle, 
+  Settings2, 
+  Sparkle, 
+  Users, 
+  FlaskConical, 
+  Hammer, 
+  Play, 
+  Pause, 
+  Volume2, 
+  VolumeX, 
+  Sparkles,
+  Award,
+  ChevronRight,
+  Github,
+  Sun,
+  Moon,
+  Eye,
+  EyeOff,
+  Terminal,
+  Sliders,
+  ChevronsLeft,
+  ChevronsRight
+} from 'lucide-react';
 
-function formatNumber(num: number): string {
-  if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
-  if (num % 1 !== 0) return num.toFixed(2);
-  return num.toString();
-}
+import ResourcePanel from './components/ResourcePanel';
+import ConsoleLogs from './components/ConsoleLogs';
+import BonfireTab from './components/BonfireTab';
+import TownTab from './components/TownTab';
+import ScienceTab from './components/ScienceTab';
+import WorkshopTab from './components/WorkshopTab';
+import { playClickSound } from './utils/audio';
+import { AnimatePresence, motion } from 'motion/react';
+import SplashStartup from './components/SplashStartup';
+
+type ActiveTabType = 'bonfire' | 'town' | 'science' | 'workshop';
 
 export default function App() {
   const store = useGameStore();
-  const [activeTab, setActiveTab] = useState<'bonfire' | 'village'>('bonfire');
+  const [activeTab, setActiveTab] = useState<ActiveTabType>('bonfire');
+  const [showSpeedControls, setShowSpeedControls] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [offlineProgressMsg, setOfflineProgressMsg] = useState<string | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
+  
+  // Custom layout view togglers to manage display density - collapsed on small mobile screens
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [isLogsOpen, setIsLogsOpen] = useState(window.innerWidth >= 768);
 
-  // Core Game Loop
+  // Synchronize document attribute with theme selection
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', store.theme);
+  }, [store.theme]);
+
+  // Initialize Game loop
   useEffect(() => {
     let animationFrameId: number;
     let lastTime = Date.now();
 
     const loop = () => {
       const now = Date.now();
-      const delta = Math.min(now - lastTime, 1000); // cap max instant delta to 1 second during active tab to prevent huge spikes if frame drops, offline catchup handled elsewhere or directly in tick.
-      // Actually because we pass deltaSeconds directly, if we switch tabs and delay is bigger, we just pass the larger delta.
       const deltaSeconds = (now - lastTime) / 1000;
       
-      // if offline time is big, React batches it.
-      store.tick(deltaSeconds);
+      // Advance game store, capping maximum single-frame lag to 2 seconds
+      store.tick(Math.min(2, deltaSeconds));
       
       lastTime = now;
       animationFrameId = requestAnimationFrame(loop);
@@ -33,276 +74,489 @@ export default function App() {
 
     animationFrameId = requestAnimationFrame(loop);
 
-    // Initial offline catchup
+    // Initial offline catchup calculation
     const now = Date.now();
     const offlineSeconds = (now - store.lastTick) / 1000;
-    if (offlineSeconds > 5) {
-       console.log(`Offline progress catching up: ${offlineSeconds.toFixed(1)}s`);
-       // We pass the big chunk once to let the system simulate it
-       store.tick(offlineSeconds);
+    
+    if (offlineSeconds > 25) {
+      // Calculate how many minutes offline
+      const mins = Math.floor(offlineSeconds / 60);
+      const hours = Math.floor(mins / 60);
+      let timeStr = `${mins}m`;
+      if (hours > 0) {
+        timeStr = `${hours}h ${mins % 60}m`;
+      }
+      
+      // Let's pass the offline seconds to the tick
+      store.tick(offlineSeconds);
+      
+      setOfflineProgressMsg(
+        `Welcome Back, Elder Kitten! While you were offline for ${timeStr}, your kittens calculated the cosmos, cultivated fresh catnip, and kept the campfires warm.`
+      );
     }
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, []); // single init
+    // Trigger save confirmation toast once on startup
+    setShowSuccessToast(true);
+    const timeout = setTimeout(() => setShowSuccessToast(false), 4500);
 
-  // Derived metrics for UI
-  const usedKittens = Object.values(store.village.jobs).reduce((a, b) => a + b, 0);
-  const freeKittens = store.village.kittens - usedKittens;
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  // Compute calculated Rates per second for display
+  const kittensList = Array.isArray(store.village?.kittens) ? store.village.kittens : [];
+  const kittenCount = kittensList.length;
   
-  // Per-second calculations for display
-  const catnipRate = store.buildings.catnipField * (BUILDINGS.catnipField.effects.catnipPerSec || 0) + store.village.jobs.farmer * (JOBS.farmer.effects.catnipPerSec || 0) - (store.village.kittens * 4.25);
-  const woodRate = store.village.jobs.woodcutter * (JOBS.woodcutter.effects.woodPerSec || 0);
-  const scienceRate = store.village.jobs.scholar * (JOBS.scholar.effects.sciencePerSec || 0);
+  const jobCounts = {
+    farmer: 0,
+    woodcutter: 0,
+    scholar: 0,
+    miner: 0,
+    priest: 0
+  };
+  
+  kittensList.forEach(k => {
+    if (k.job !== 'unemployed') {
+      jobCounts[k.job]++;
+    }
+  });
+
+  const barnMultiplier = store.upgrades.reinforcedBarns ? 1.4 : 1.0;
+  const warehouseMultiplier = store.upgrades.expandedStorage ? 1.35 : 1.0;
+
+  let maxCatnip = 2000 + (store.buildings.pasture * 500) + (store.buildings.barn * 2500 * barnMultiplier);
+  if (store.upgrades.catnipSilos) maxCatnip *= 1.5;
+
+  // Rates formulas mirror store tick perfectly for pixel-perfect UI synchronization
+  const farmerEffBonus = store.researched.agriculture ? 1.20 : 1.0;
+  const seasonModifier = store.researched.calendar ? SEASONS_DATA[store.season.current].catnipModifier : 1.0;
+  const aqueductBoost = 1 + (store.buildings.aqueduct * 0.15);
+
+  const fieldsPassiveRate = store.buildings.catnipField * 0.63 * seasonModifier * aqueductBoost;
+  const farmerRateValue = jobCounts.farmer * 5.0 * farmerEffBonus * seasonModifier;
+  
+  const pastureIntakeReduction = Math.max(0.50, 1 - (store.buildings.pasture * 0.015));
+  const kittenEatsRate = kittenCount * 4.25 * pastureIntakeReduction;
+  
+  const computedCatnipRate = fieldsPassiveRate + farmerRateValue - kittenEatsRate;
+
+  let axeMultiplier = 1.0;
+  if (store.upgrades.ironAxes) axeMultiplier = 1.75;
+  else if (store.upgrades.mineralAxes) axeMultiplier = 1.25;
+
+  const efficiencyFactor = store.village.happiness / 100;
+  
+  let computedWoodRate = jobCounts.woodcutter * 0.10 * axeMultiplier * efficiencyFactor;
+  let computedMineralsRate = (jobCounts.miner * 0.18 * efficiencyFactor) + (store.buildings.mine * 0.05);
+  let computedIronRate = 0;
+
+  if (store.buildings.smelter > 0) {
+    const smeltersCount = store.buildings.smelter;
+    // Smelters consume raw mats to output iron
+    if ((store.resources.wood?.amount ?? 0) > 1 && (store.resources.minerals?.amount ?? 0) > 10) {
+      computedWoodRate -= smeltersCount * 1.0;
+      computedMineralsRate -= smeltersCount * 10.0;
+      computedIronRate += smeltersCount * 0.18;
+    }
+  }
+
+  const academyScholarMod = 1 + (store.buildings.academy * 0.20);
+  const computedScienceRate = jobCounts.scholar * 0.25 * academyScholarMod * efficiencyFactor;
+  const computedCultureRate = jobCounts.priest * 0.15 * efficiencyFactor;
+
+  const handleTabChange = (tab: ActiveTabType) => {
+    setActiveTab(tab);
+    if (store.soundEnabled) playClickSound('click');
+  };
+
+  const currentTabComponent = () => {
+    switch (activeTab) {
+      case 'bonfire':
+        return <BonfireTab store={store} />;
+      case 'town':
+        return <TownTab store={store} />;
+      case 'science':
+        return <ScienceTab store={store} />;
+      case 'workshop':
+        return <WorkshopTab store={store} />;
+      default:
+        return <BonfireTab store={store} />;
+    }
+  };
 
   return (
-    <div className="flex flex-col min-h-screen font-mono text-sm sm:text-base border-t-4 border-gray-600 bg-gray-900 text-gray-300">
+    <div className="flex flex-col h-screen overflow-hidden theme-bg-app theme-text-main antialiased font-mono max-w-full">
       
-      {/* HEADER SECTION */}
-      <header className="p-4 border-b border-gray-800 shrink-0 w-full flex justify-between items-center">
-         <div>
-            <h1 className="text-xl font-bold tracking-widest text-gray-100 flex items-center gap-2">
-              <Flame size={20} className="text-orange-500" />
-              KITTENS GAME
-            </h1>
-         </div>
-         <div className="flex gap-4">
-            <button onClick={store.resetGame} className="text-xs text-gray-600 hover:text-red-500 hover:underline transition-colors">
-               Wipe Save
+      {/* CINEMATIC STARTUP SPLASH SCREEN WITH INTERACTIVE IMMERSIVE LAUNCHER */}
+      <AnimatePresence mode="wait">
+        {showSplash && (
+          <motion.div
+            key="splash-screen-wrapper"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            className="fixed inset-0 z-50 overflow-hidden"
+          >
+            <SplashStartup 
+              onEnter={() => setShowSplash(false)} 
+              soundEnabled={store.soundEnabled} 
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* GLOBAL TOAST NOTIFIER */}
+      {showSuccessToast && (
+        <div className="fixed top-4 right-4 z-50 bg-neutral-900/90 border border-neutral-700/50 text-neutral-250 p-3 h-14 rounded-xl flex items-center gap-2 shadow-2xl backdrop-blur-md animate-fade-in text-xs">
+          <Sparkles size={14} className="text-neutral-300" />
+          <span>Local storage persistence established. Progress automatically saved offline.</span>
+        </div>
+      )}
+
+      {/* OFFLINE RESUME MODAL POPUP */}
+      {offlineProgressMsg && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="theme-bg-card border theme-border p-6 rounded-2xl max-w-md w-full flex flex-col gap-4 shadow-2xl">
+            <h3 className="text-sm uppercase font-black tracking-widest theme-text-main flex items-center gap-2">
+              <Award size={18} />
+              <span>Offline Chronoscopy</span>
+            </h3>
+            <p className="text-xs theme-text-sec leading-relaxed font-sans">{offlineProgressMsg}</p>
+            <button
+              onClick={() => {
+                setOfflineProgressMsg(null);
+                if (store.soundEnabled) playClickSound('success');
+              }}
+              className="theme-accent-bg text-xs font-black uppercase tracking-wider py-3 rounded-lg mt-2 cursor-pointer transition-transform duration-100 active:scale-95"
+            >
+              Resume Duties
             </button>
-         </div>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER NAVIGATION BAR */}
+      <header className="theme-bg-panel border-b theme-border h-16 shrink-0 px-3 sm:px-5 flex items-center justify-between select-none shadow-md">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="theme-bg-card border theme-border p-1.5 sm:p-2 rounded-xl text-neutral-400 shadow-inner">
+            <Flame size={18} className="theme-text-main sm:w-[20px] sm:h-[20px]" />
+          </div>
+          <div>
+            <h1 className="text-xs sm:text-sm font-black tracking-wider sm:tracking-[0.25em] theme-text-main flex items-center gap-1.5 sm:gap-2 uppercase">
+              <span className="hidden min-[400px]:inline">Kittens Incremental</span>
+              <span className="min-[400px]:hidden">Kittens</span>
+            </h1>
+            <p className="text-[10px] theme-text-sec hidden sm:block tracking-widest leading-none mt-1">ELEGANT COGNITIVE STRATEGY</p>
+          </div>
+        </div>
+
+        {/* TIMING, SPEED, AUDIO, THEME, AND VIEW CONFIGURATORS */}
+        <div className="flex items-center gap-2 sm:gap-3 text-xs font-bold text-gray-400">
+          
+          {/* TOGGLE SIDEBAR CABINET */}
+          <button
+            onClick={() => {
+              setIsSidebarOpen(!isSidebarOpen);
+              if (store.soundEnabled) playClickSound('click');
+            }}
+            className={`p-2 theme-hover-bg border rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] uppercase font-bold ${
+              isSidebarOpen ? 'theme-border-active theme-text-main' : 'theme-border theme-text-muted'
+            }`}
+            title={isSidebarOpen ? "Collaspe Left Resource Shelf" : "Expand Left Resource Shelf"}
+          >
+            {isSidebarOpen ? <Eye size={13} className="theme-text-main" /> : <EyeOff size={13} className="theme-text-muted" />}
+            <span className="hidden lg:inline">Resources</span>
+          </button>
+
+          {/* TOGGLE REACTION CHRONICLES LOGGER */}
+          <button
+            onClick={() => {
+              setIsLogsOpen(!isLogsOpen);
+              if (store.soundEnabled) playClickSound('click');
+            }}
+            className={`p-2 theme-hover-bg border rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] uppercase font-bold ${
+              isLogsOpen ? 'theme-border-active theme-text-main' : 'theme-border theme-text-muted'
+            }`}
+            title={isLogsOpen ? "Collapse Activity Chronicles Log" : "Expand Activity Chronicles Log"}
+          >
+            {isLogsOpen ? <Eye size={13} className="theme-text-main" /> : <EyeOff size={13} className="theme-text-muted" />}
+            <span className="hidden lg:inline">Logs</span>
+          </button>
+          
+          {/* THEME TOGGLE */}
+          <button
+            onClick={() => {
+              const nextTheme = store.theme === 'dark' ? 'light' : 'dark';
+              store.setTheme(nextTheme);
+              if (store.soundEnabled) playClickSound('click');
+            }}
+            className="p-2 theme-hover-bg border theme-border rounded-lg theme-text-sec hover:theme-text-main transition-all cursor-pointer flex items-center justify-center"
+            title={store.theme === 'dark' ? "Switch to Light Monochrome" : "Switch to Dark Monochrome"}
+          >
+            {store.theme === 'dark' ? <Sun size={14} className="theme-text-main" /> : <Moon size={14} className="theme-text-main" />}
+          </button>
+
+          {/* SOUND CONTROL */}
+          <button
+            onClick={() => {
+              store.toggleSound();
+              if (!store.soundEnabled) {
+                playClickSound('success');
+              }
+            }}
+            className="p-2 theme-hover-bg border theme-border rounded-lg theme-text-sec hover:theme-text-main transition-all cursor-pointer flex items-center justify-center"
+            title={store.soundEnabled ? "Mute Game Effects" : "Unmute Game Effects"}
+          >
+            {store.soundEnabled ? <Volume2 size={14} className="theme-text-main" /> : <VolumeX size={14} className="theme-text-muted" />}
+          </button>
+
+          {/* GAME VELOCITY ADJUSTMENTS */}
+          <div className="flex items-center theme-bg-card border theme-border p-1 rounded-lg gap-0.5">
+            <button
+              onClick={() => {
+                store.setGameSpeed(0);
+                if (store.soundEnabled) playClickSound('click');
+              }}
+              className={`p-1.5 rounded-md cursor-pointer transition-all ${store.gameSpeed === 0 ? 'theme-accent-bg font-extrabold' : 'theme-text-sec hover:theme-text-main'}`}
+              title="Pause Ticks"
+            >
+              <Pause size={12} />
+            </button>
+            <button
+              onClick={() => {
+                store.setGameSpeed(1);
+                if (store.soundEnabled) playClickSound('click');
+              }}
+              className={`px-2 py-1 text-[10px] rounded-md font-extrabold cursor-pointer transition-all ${store.gameSpeed === 1 ? 'theme-accent-bg font-black' : 'theme-text-sec hover:theme-text-main'}`}
+              title="Normal speed (1x)"
+            >
+              1X
+            </button>
+            <button
+              onClick={() => {
+                store.setGameSpeed(4);
+                if (store.soundEnabled) playClickSound('success');
+              }}
+              className={`px-2 py-1 text-[10px] rounded-md font-extrabold cursor-pointer transition-all ${store.gameSpeed === 4 ? 'theme-accent-bg font-black' : 'theme-text-sec hover:theme-text-main'}`}
+              title="Speed Booster (4x)"
+            >
+              4X
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              if (confirm("Reset kittens civilisation? Progress will be lost.")) {
+                store.resetGame();
+              }
+            }}
+            className="text-[10px] uppercase font-bold theme-text-muted hover:theme-text-main hover:border-red-500/50 px-2.5 py-1.5 border theme-border rounded-lg transition-colors cursor-pointer hidden sm:block"
+          >
+            Reset Progress
+          </button>
+        </div>
       </header>
 
-      {/* THREE COLUMN LAYOUT OR TWO COLUMN responsive */}
-      <div className="flex flex-1 flex-col md:flex-row max-h-[calc(100vh-64px)] overflow-hidden">
+      {/* CORE WORKSPACE GRID */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden max-h-[calc(100vh-64px)]">
         
-        {/* LEFT COLUMN: RESOURCES (Always visible on desktop) */}
-        <aside className="w-full md:w-64 border-r border-gray-800 p-4 flex flex-col gap-6 md:overflow-y-auto shrink-0 z-10 bg-gray-900 border-b md:border-b-0">
-           <div className="flex flex-col gap-2">
-             <button 
-                onClick={store.gatherCatnip}
-                className="bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-gray-200 p-3 rounded font-bold border border-gray-700 flex justify-center items-center select-none transition-transform active:scale-[0.98]"
+        {/* RESOURCE CONTROL MATRIX (LEFT COLUMN/DRAWER OVERLAY) */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <>
+              {/* Sidebar/Drawer body */}
+              <motion.div
+                key="resource-sidebar"
+                initial={{ x: -285, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -285, opacity: 0 }}
+                transition={{ type: 'spring', damping: 24, stiffness: 200 }}
+                className="fixed md:static inset-y-16 md:inset-y-auto left-0 z-40 w-[285px] md:w-72 h-[calc(100vh-64px)] md:h-full flex flex-col shrink-0 overflow-hidden shadow-2xl md:shadow-none theme-bg-panel border-r theme-border"
               >
-               Gather Catnip
-             </button>
-             
-             {store.unlocks.wood && (
-                <button 
-                  onClick={store.refineWood}
-                  disabled={store.resources.catnip.amount < 100}
-                  className="bg-gray-800 hover:bg-gray-700 active:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-200 p-2 rounded border border-gray-700 select-none text-xs"
-                >
-                 Refine catnip to wood (100)
-               </button>
-             )}
-           </div>
+                <ResourcePanel
+                  store={store}
+                  catnipRate={computedCatnipRate}
+                  woodRate={computedWoodRate}
+                  scienceRate={computedScienceRate}
+                  mineralsRate={computedMineralsRate}
+                  cultureRate={computedCultureRate}
+                  ironRate={computedIronRate}
+                />
+              </motion.div>
 
-           <div>
-              <h2 className="text-xs uppercase tracking-widest font-bold mb-3 text-gray-500">Resources</h2>
-              <table className="w-full text-left text-sm">
-                <tbody>
-                  <tr className={catnipRate < 0 ? 'text-red-400' : ''}>
-                    <td className="py-1">Catnip</td>
-                    <td className="text-right py-1">
-                      {formatNumber(store.resources.catnip.amount)} 
-                      <span className="text-xs text-gray-500 ml-1">/ {formatNumber(store.resources.catnip.max)}</span>
-                    </td>
-                    <td className="w-12 text-right text-xs text-gray-500 ml-2">
-                       {catnipRate > 0 ? '+' : ''}{catnipRate.toFixed(2)}/s
-                    </td>
-                  </tr>
-                  {store.unlocks.wood && (
-                    <tr>
-                      <td className="py-1">Wood</td>
-                      <td className="text-right py-1">
-                        {formatNumber(store.resources.wood.amount)}
-                        <span className="text-xs text-gray-500 ml-1">/ {formatNumber(store.resources.wood.max)}</span>
-                      </td>
-                      <td className="w-12 text-right text-xs text-gray-500 ml-2">
-                         {woodRate > 0 ? '+' : ''}{woodRate.toFixed(2)}/s
-                      </td>
-                    </tr>
-                  )}
-                  {store.unlocks.minerals && (
-                    <tr>
-                      <td className="py-1">Minerals</td>
-                      <td className="text-right py-1">
-                        {formatNumber(store.resources.minerals.amount)}
-                        <span className="text-xs text-gray-500 ml-1">/ {formatNumber(store.resources.minerals.max)}</span>
-                      </td>
-                      <td className="w-12 text-right text-xs text-gray-500 ml-2"></td>
-                    </tr>
-                  )}
-                  {store.unlocks.science && (
-                    <tr>
-                      <td className="py-1 text-blue-300">Science</td>
-                      <td className="text-right py-1 text-blue-300">
-                        {formatNumber(store.resources.science.amount)}
-                        <span className="text-xs text-blue-900 ml-1">/ {formatNumber(store.resources.science.max)}</span>
-                      </td>
-                      <td className="w-12 text-right text-xs text-blue-500 ml-2">
-                         {scienceRate > 0 ? '+' : ''}{scienceRate.toFixed(2)}/s
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              {/* Backdrop covering screen only on mobile sizes */}
+              <motion.div
+                key="resource-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                onClick={() => setIsSidebarOpen(false)}
+                className="fixed inset-0 top-16 bg-black/50 backdrop-blur-xs z-30 md:hidden"
+              />
+            </>
+          )}
+        </AnimatePresence>
 
-              {store.unlocks.village && (
-                <div className="mt-4 pt-4 border-t border-gray-800">
-                   <h2 className="text-xs uppercase tracking-widest font-bold mb-3 text-gray-500">Population</h2>
-                   <div className="flex justify-between text-sm">
-                      <span>Kittens</span>
-                      <span>{store.village.kittens} / {store.village.maxKittens}</span>
-                   </div>
-                   <div className="text-xs text-gray-500 mt-1">
-                      {freeKittens > 0 ? `${freeKittens} free kittens` : 'All assigned'}
-                   </div>
+        {/* COMPONENT LAYOUT TABS (CENTER CABINET) */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden theme-bg-app border-r theme-border">
+          
+          {/* TAB BAR NAVIGATION */}
+          <nav className="h-13 theme-bg-panel border-b theme-border shrink-0 flex items-center px-4 sm:px-6 gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth relative select-none">
+            <button
+              onClick={() => handleTabChange('bonfire')}
+              className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                activeTab === 'bonfire' 
+                  ? 'theme-border-active theme-text-main font-extrabold' 
+                  : 'border-transparent theme-text-muted hover:theme-text-sec'
+              }`}
+            >
+              <Sparkle size={12} />
+              <span>Bonfire</span>
+            </button>
+
+            {store.unlocks.village && (
+              <button
+                onClick={() => handleTabChange('town')}
+                className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                  activeTab === 'town' 
+                    ? 'theme-border-active theme-text-main font-extrabold' 
+                    : 'border-transparent theme-text-muted hover:theme-text-sec'
+                }`}
+              >
+                <Users size={12} />
+                <span>Small Village</span>
+              </button>
+            )}
+
+            {store.unlocks.science && (
+              <button
+                onClick={() => handleTabChange('science')}
+                className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                  activeTab === 'science' 
+                    ? 'theme-border-active theme-text-main font-extrabold' 
+                    : 'border-transparent theme-text-muted hover:theme-text-sec'
+                }`}
+              >
+                <FlaskConical size={12} />
+                <span>Science</span>
+              </button>
+            )}
+
+            {store.unlocks.workshop && (
+              <button
+                onClick={() => handleTabChange('workshop')}
+                className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                  activeTab === 'workshop' 
+                    ? 'theme-border-active theme-text-main font-extrabold' 
+                    : 'border-transparent theme-text-muted hover:theme-text-sec'
+                }`}
+              >
+                <Hammer size={12} />
+                <span>Workshop</span>
+              </button>
+            )}
+          </nav>
+
+          {/* COMPACT RESOURCE MINI-HUD (Shown only in Zen / Collapsed Resource Shelf mode) */}
+          {!isSidebarOpen && (
+            <div className="theme-bg-panel border-b theme-border px-6 py-2.5 flex flex-wrap gap-x-6 gap-y-1.5 items-center text-[11px] font-mono select-none animate-fade-in shadow-inner">
+              <span className="text-[9px] uppercase font-bold theme-text-sec tracking-widest mr-1 sm:block hidden">HUD Matrix:</span>
+              
+              {/* Catnip */}
+              <div className="flex items-center gap-1.5" title="Catnip status">
+                <span className="theme-text-muted">Catnip:</span>
+                <span className="theme-text-main font-bold">
+                  {Math.floor(store.resources.catnip.amount).toLocaleString()}
+                </span>
+                <span className={`text-[9.5px] font-bold ${computedCatnipRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                  ({computedCatnipRate >= 0 ? '+' : ''}{computedCatnipRate.toFixed(1)}/s)
+                </span>
+              </div>
+
+              {/* Wood */}
+              {store.unlocks.wood && (
+                <div className="flex items-center gap-1.5" title="Wood status">
+                  <span className="theme-text-muted">Wood:</span>
+                  <span className="theme-text-main font-bold">
+                    {Math.floor(store.resources.wood.amount).toLocaleString()}
+                  </span>
+                  <span className={`text-[9.5px] font-bold ${computedWoodRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                    ({computedWoodRate >= 0 ? '+' : ''}{computedWoodRate.toFixed(2)}/s)
+                  </span>
                 </div>
               )}
-           </div>
-        </aside>
 
-        {/* RIGHT COLUMN: TABS & ACTION AREA */}
-        <main className="flex-1 flex flex-col md:overflow-y-auto">
-           {/* TABS NAV */}
-           <nav className="flex p-2 gap-2 border-b border-gray-800 bg-gray-900 sticky top-0 z-10 w-full overflow-x-auto">
-             <button
-                onClick={() => setActiveTab('bonfire')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'bonfire' ? 'bg-gray-800 text-white rounded' : 'text-gray-500 hover:text-gray-300'}`}
-             >
-                Bonfire
-             </button>
-             {store.unlocks.village && (
-                <button
-                  onClick={() => setActiveTab('village')}
-                  className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === 'village' ? 'bg-gray-800 text-white rounded' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                  <Users size={14} />
-                  Small Village
-                </button>
-             )}
-           </nav>
+              {/* Minerals */}
+              {store.unlocks.minerals && (
+                <div className="flex items-center gap-1.5" title="Minerals status">
+                  <span className="theme-text-muted">Minerals:</span>
+                  <span className="theme-text-main font-bold">
+                    {Math.floor(store.resources.minerals.amount).toLocaleString()}
+                  </span>
+                  <span className={`text-[9.5px] font-bold ${computedMineralsRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                    ({computedMineralsRate >= 0 ? '+' : ''}{computedMineralsRate.toFixed(2)}/s)
+                  </span>
+                </div>
+              )}
 
-           {/* TAB CONTENT: BONFIRE (Buildings) */}
-           {activeTab === 'bonfire' && (
-              <div className="p-4 md:p-8 max-w-3xl flex flex-col gap-4">
-                 <h2 className="text-lg font-medium text-gray-400 mb-2 border-b border-gray-800 pb-2">Buildings</h2>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   {(Object.entries(BUILDINGS) as [BuildingType, typeof BUILDINGS[BuildingType]][]).map(([id, b]) => {
-                      // Logic to hide buildings if prerequisites aren't met
-                      if (id === 'pasture' && !store.unlocks.wood) return null;
-                      if (id === 'library' && !store.unlocks.wood) return null;
-                      if (id === 'barn' && store.buildings.wood == null && !store.unlocks.wood) return null; // wait till wood exists
-                      if (id === 'mine' && store.resources.wood.amount < 50 && store.buildings.library === 0) return null; // reveal later
+              {/* Iron */}
+              {store.unlocks.iron && (
+                <div className="flex items-center gap-1.5" title="Iron status">
+                  <span className="theme-text-muted">Iron:</span>
+                  <span className="theme-text-main font-bold">
+                    {Math.floor(store.resources.iron.amount).toLocaleString()}
+                  </span>
+                  <span className={`text-[9.5px] font-bold ${computedIronRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                    ({computedIronRate >= 0 ? '+' : ''}{computedIronRate.toFixed(2)}/s)
+                  </span>
+                </div>
+              )}
 
-                      const count = store.buildings[id];
-                      
-                      // Check affordability
-                      let canAfford = true;
-                      const costsNode = Object.entries(b.baseCost).map(([res, cost]) => {
-                         const currentCost = calculateCost(cost as number, b.costRatio, count);
-                         const isAffordable = store.resources[res as ResourceType]?.amount >= currentCost;
-                         if (!isAffordable) canAfford = false;
-                         return (
-                           <span key={res} className={`text-xs block ${isAffordable ? 'text-gray-400' : 'text-red-500'}`}>
-                              {res}: {formatNumber(currentCost)}
-                           </span>
-                         );
-                      });
+              {/* Science */}
+              {store.unlocks.science && (
+                <div className="flex items-center gap-1.5" title="Science status">
+                  <span className="theme-text-muted">Science:</span>
+                  <span className="theme-text-main font-bold">
+                    {Math.floor(store.resources.science.amount).toLocaleString()}
+                  </span>
+                  <span className={`text-[9.5px] font-bold ${computedScienceRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                    ({computedScienceRate >= 0 ? '+' : ''}{computedScienceRate.toFixed(1)}/s)
+                  </span>
+                </div>
+              )}
 
-                      return (
-                        <div key={id} className={`border p-3 rounded flex flex-col justify-between ${canAfford ? 'border-gray-600 bg-gray-800/30' : 'border-gray-800 bg-gray-900'}`}>
-                           <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <h3 className="font-bold text-gray-200">{b.name} <span className="ml-2 text-gray-500">{count}</span></h3>
-                                <p className="text-xs text-gray-500 max-w-[200px] mt-1 line-clamp-2">{b.desc}</p>
-                              </div>
-                              <button 
-                                onClick={() => store.buyBuilding(id)}
-                                disabled={!canAfford}
-                                className={`px-3 py-1 text-xs border rounded-sm transition-colors ${canAfford ? 'bg-gray-700 hover:bg-gray-600 border-gray-500 text-white cursor-pointer active:scale-95' : 'bg-transparent border-gray-800 text-gray-600 cursor-not-allowed'}`}
-                              >
-                                Build
-                              </button>
-                           </div>
-                           <div className="mt-2 pt-2 border-t border-gray-800 flex gap-2">
-                             <div>
-                               <span className="text-[10px] uppercase text-gray-600 block leading-none mb-1">Cost</span>
-                               {costsNode}
-                             </div>
-                           </div>
-                        </div>
-                      )
-                   })}
-                 </div>
-              </div>
-           )}
+              {/* Culture */}
+              {store.unlocks.culture && (
+                <div className="flex items-center gap-1.5" title="Culture status">
+                  <span className="theme-text-muted">Culture:</span>
+                  <span className="theme-text-main font-bold">
+                    {Math.floor(store.resources.culture.amount).toLocaleString()}
+                  </span>
+                  <span className={`text-[9.5px] font-bold ${computedCultureRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                    ({computedCultureRate >= 0 ? '+' : ''}{computedCultureRate.toFixed(2)}/s)
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
-           {/* TAB CONTENT: VILLAGE (Jobs) */}
-           {activeTab === 'village' && (
-              <div className="p-4 md:p-8 max-w-2xl flex flex-col gap-4">
-                 <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-800">
-                    <h2 className="text-lg font-medium text-gray-400">Job Assignments</h2>
-                    <div className="text-sm">
-                       Free Kittens: <span className={freeKittens > 0 ? "text-green-400 font-bold" : "text-gray-500"}>{freeKittens}</span>
-                    </div>
-                 </div>
+          {/* ACTIVE CABINET WINDOW */}
+          <div className="flex-1 overflow-hidden flex flex-col h-full">
+            {currentTabComponent()}
+          </div>
 
-                 <div className="flex flex-col gap-4">
-                   <table className="w-full text-left bg-gray-800/20 rounded">
-                      <thead>
-                        <tr className="border-b border-gray-800 text-xs uppercase text-gray-500">
-                           <th className="font-normal p-3 w-1/3">Job</th>
-                           <th className="font-normal p-3">Allocated</th>
-                           <th className="font-normal p-3 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(Object.entries(JOBS) as [JobType, typeof JOBS[JobType]][]).map(([id, job]) => {
-                           // hide miner if mining isn't unlocked
-                           if (id === 'miner' && !store.unlocks.minerals) return null;
-                           // hide scholar if library not built
-                           if (id === 'scholar' && store.buildings.library === 0) return null;
+          {/* CHRONICLES LOG CONSOLE (STATICALLY AT BOTTOM OUTLET) */}
+          {isLogsOpen && (
+            <div className="p-5 border-t theme-border theme-bg-panel shrink-0">
+              <ConsoleLogs logs={store.logs} />
+            </div>
+          )}
 
-                           const count = store.village.jobs[id];
-                           return (
-                             <tr key={id} className="border-b border-gray-800/50 hover:bg-gray-800/50">
-                                <td className="p-3">
-                                   <div className="font-medium text-gray-300">{job.name}</div>
-                                   <div className="text-[10px] text-gray-500 mt-1 max-w-[150px]">{job.desc}</div>
-                                </td>
-                                <td className="p-3">
-                                   <span className="font-bold text-gray-200">{count}</span>
-                                </td>
-                                <td className="p-3 text-right">
-                                   <div className="flex justify-end gap-1">
-                                      <button 
-                                        onClick={() => store.assignJob(id, -1)}
-                                        disabled={count === 0}
-                                        className="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-red-900/50 text-gray-400 disabled:opacity-30 disabled:hover:bg-gray-800 border border-gray-700 rounded active:scale-95 transition-all text-lg font-bold"
-                                      >
-                                        -
-                                      </button>
-                                      <button 
-                                        onClick={() => store.assignJob(id, 1)}
-                                        disabled={freeKittens === 0}
-                                        className="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-green-900/50 text-gray-400 disabled:opacity-30 disabled:hover:bg-gray-800 border border-gray-700 rounded active:scale-95 transition-all text-lg font-bold"
-                                      >
-                                        +
-                                      </button>
-                                   </div>
-                                </td>
-                             </tr>
-                           )
-                        })}
-                      </tbody>
-                   </table>
-                 </div>
-              </div>
-           )}
+        </div>
 
-        </main>
       </div>
 
     </div>
