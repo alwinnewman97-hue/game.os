@@ -9,9 +9,79 @@ import {
   UpgradeType, 
   SeasonType, 
   Kitten, 
-  GameLogMessage 
+  GameLogMessage,
+  ActiveCertificateBoost
 } from '../types';
 import { BUILDINGS, SCIENCES, JOBS, UPGRADES, SEASONS_DATA, generateRandomKitten } from '../gameData';
+
+export interface CertificateDef {
+  id: 'bronze' | 'silver' | 'gold' | 'infinite';
+  name: string;
+  desc: string;
+  boostPercent: number; // 0.15 = 15%
+  duration: number; // in seconds (e.g. 180)
+  costs: {
+    parchment: number; // Portal Formula
+    beam?: number; // Nano-Beam
+    slab?: number; // Hyper-Slab
+    plate?: number; // Neutrium Plate
+    science?: number; // Portal Tech
+  };
+}
+
+export const CERTIFICATES: Record<string, CertificateDef> = {
+  bronze: {
+    id: 'bronze',
+    name: 'Citadel Class-C Morty Certificate',
+    desc: 'Authorized clone registry form. Temporarily boosts all job productivity by +15% for 3 minutes.',
+    boostPercent: 0.15,
+    duration: 180,
+    costs: {
+      parchment: 8,
+      beam: 12,
+      slab: 12,
+    }
+  },
+  silver: {
+    id: 'silver',
+    name: 'Interdimensional Class-B Morty Certificate',
+    desc: 'Approved space-time travel clearance document. Temporarily boosts all job productivity by +30% for 6 minutes.',
+    boostPercent: 0.30,
+    duration: 360,
+    costs: {
+      parchment: 20,
+      beam: 25,
+      plate: 25,
+    }
+  },
+  gold: {
+    id: 'gold',
+    name: 'Galactic Federation Class-A Morty Certificate',
+    desc: 'Premium administrative exemption permit. Temporarily boosts all job productivity by +60% for 12 minutes.',
+    boostPercent: 0.60,
+    duration: 720,
+    costs: {
+      parchment: 45,
+      slab: 45,
+      plate: 45,
+      science: 1500,
+    }
+  },
+  infinite: {
+    id: 'infinite',
+    name: 'Council of Ricks Multiversal Sovereign Stamp',
+    desc: 'Sub-space supreme identification passport. Temporarily doubles all job productivity (+100%) for 20 minutes.',
+    boostPercent: 1.00,
+    duration: 1200,
+    costs: {
+      parchment: 100,
+      beam: 90,
+      slab: 90,
+      plate: 90,
+      science: 4000,
+    }
+  }
+};
 
 const BASE_RESOURCES: Record<ResourceType, { amount: number; max: number }> = {
   catnip: { amount: 50, max: 2000 },
@@ -67,7 +137,7 @@ const initialLogs: GameLogMessage[] = [
   {
     id: 'initial',
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    text: 'Welcome, Elder. Gather catnip, erect huts, and nurture your digital feline colony.',
+    text: "Rick's portal scanner online. Cultivate Mega Seeds, engineer Laboratories, and gather alternative Mortys.",
     type: 'success'
   }
 ];
@@ -84,6 +154,8 @@ export const useGameStore = create<GameState>()(
         maxKittens: 0,
         happiness: 100,
       },
+      activeCertificates: [],
+      craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
       season: {
         current: 'Spring',
         daysPassed: 0,
@@ -157,6 +229,26 @@ export const useGameStore = create<GameState>()(
         const effectiveDelta = deltaSeconds * state.gameSpeed * 1.5; // slight speed-up to make incremental play feel super responsive
         const now = Date.now();
 
+        // Count down active certificates
+        let updatedActive = (state.activeCertificates || []).map(cert => ({
+          ...cert,
+          timeRemaining: cert.timeRemaining - effectiveDelta
+        })).filter(cert => cert.timeRemaining > 0);
+
+        // Log expiration
+        const prevActive = state.activeCertificates || [];
+        if (prevActive.length > updatedActive.length) {
+          prevActive.forEach(p => {
+            const hasExpired = !updatedActive.some(u => u.id === p.id);
+            if (hasExpired) {
+              state.addLog(`Booster expired: ${p.name}'s production multiplier is deactivated.`, 'info');
+            }
+          });
+        }
+
+        const totalBoost = updatedActive.reduce((acc, cert) => acc + cert.boostPercent, 0);
+        const certificateMultiplier = 1 + totalBoost;
+
         // 1. Storage upgrade ratios
         const barnMultiplier = state.upgrades.reinforcedBarns ? 1.4 : 1.0;
         const warehouseMultiplier = state.upgrades.expandedStorage ? 1.35 : 1.0;
@@ -222,7 +314,7 @@ export const useGameStore = create<GameState>()(
 
         // Base field production is passive
         const fieldsPassiveRate = state.buildings.catnipField * 0.63 * seasonModifier * aqueductBoost;
-        const farmerRate = jobCounts.farmer * 5.0 * farmerEffBonus * seasonModifier;
+        const farmerRate = jobCounts.farmer * 5.0 * farmerEffBonus * seasonModifier * certificateMultiplier;
         let catnipRate = fieldsPassiveRate + farmerRate;
 
         // KITTEN STARVATION: Each kitten consumes 4.25 catnip / sec
@@ -248,21 +340,21 @@ export const useGameStore = create<GameState>()(
         if (state.upgrades.ironAxes) axeMultiplier = 1.75;
         else if (state.upgrades.mineralAxes) axeMultiplier = 1.25;
 
-        const woodcutterBase = jobCounts.woodcutter * 0.10 * axeMultiplier * efficiencyFactor;
+        const woodcutterBase = jobCounts.woodcutter * 0.10 * axeMultiplier * efficiencyFactor * certificateMultiplier;
         let woodRate = woodcutterBase;
 
         // SCHOLAR
         // Libraries & academies boost scholars
         const academyScholarMod = 1 + (state.buildings.academy * 0.20);
-        let scienceRate = jobCounts.scholar * 0.25 * academyScholarMod * efficiencyFactor;
+        let scienceRate = jobCounts.scholar * 0.25 * academyScholarMod * efficiencyFactor * certificateMultiplier;
 
         // MINER
-        const minerBase = jobCounts.miner * 0.18 * efficiencyFactor;
+        const minerBase = jobCounts.miner * 0.18 * efficiencyFactor * certificateMultiplier;
         // Mine adds slightly passive mineral gain as well
         let mineralsRate = minerBase + (state.buildings.mine * 0.05);
 
         // PRIEST
-        let cultureRate = jobCounts.priest * 0.15 * efficiencyFactor;
+        let cultureRate = jobCounts.priest * 0.15 * efficiencyFactor * certificateMultiplier;
 
         // SMELTER PASSIVES
         // Consumes 1.0 Wood and 10 Minerals to smelt +0.15 Iron per smelter
@@ -330,7 +422,7 @@ export const useGameStore = create<GameState>()(
             const deceased = updatedKittens.pop();
             if (deceased) {
               state.addLog(
-                `Unfortunate tragedy! ${deceased.name} ${deceased.surname} has perished of winter starvation. Harvest catnip immediately!`, 
+                `Unfortunate tragedy! ${deceased.name} ${deceased.surname} ran dry on seeds and suffered agonizing withdrawal. Cultivate Mega Seeds immediately!`, 
                 'death'
               );
             }
@@ -344,7 +436,7 @@ export const useGameStore = create<GameState>()(
             const newKitty = generateRandomKitten();
             updatedKittens.push(newKitty);
             state.addLog(
-              `A curious stray kitten arrived in town! Say hello to ${newKitty.name} ${newKitty.surname} (${newKitty.trait}).`, 
+              `An alternate Morty climbed out of a green portal! Welcome ${newKitty.name} ${newKitty.surname} (${newKitty.trait}).`, 
               'success'
             );
           }
@@ -367,6 +459,7 @@ export const useGameStore = create<GameState>()(
 
         set({
           lastTick: now,
+          activeCertificates: updatedActive,
           season: {
             ...state.season,
             current: currentSeason,
@@ -491,7 +584,7 @@ export const useGameStore = create<GameState>()(
           }
           
           const qtyText = quantity === 1 ? 'one' : `${quantity}x`;
-          state.addLog(`Built ${qtyText} ${bDef.name} for the village.`, 'success');
+          state.addLog(`Built ${qtyText} ${bDef.name} for the Citadel.`, 'success');
           
           return {
             resources: res,
@@ -620,7 +713,7 @@ export const useGameStore = create<GameState>()(
          const kittensList = Array.isArray(state.village?.kittens) ? state.village.kittens : [];
          if (kittensList.length < maxKittens) {
             const extra = generateRandomKitten();
-            state.addLog(`A wandering kitten wanders into camp: ${extra.name} ${extra.surname}.`, 'success');
+            state.addLog(`A stray Morty wanders out of space-time: ${extra.name} ${extra.surname}.`, 'success');
             return {
               village: {
                 ...state.village,
@@ -633,7 +726,7 @@ export const useGameStore = create<GameState>()(
 
       resetGame: () => {
         // complete wipe
-        if (window.confirm("Are you absolutely sure you want to build a new colony? This will delete all current kittens, buildings, and scientific progress.")) {
+        if (window.confirm("Are you absolutely sure you want to trigger a multiversal reboot? This will wipe all Mortys, labs, and portal formulas.")) {
           set({
             resources: BASE_RESOURCES,
             buildings: BASE_BUILDINGS,
@@ -644,6 +737,8 @@ export const useGameStore = create<GameState>()(
               maxKittens: 0,
               happiness: 100,
             },
+            activeCertificates: [],
+            craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
             season: {
               current: 'Spring',
               daysPassed: 0,
@@ -663,17 +758,82 @@ export const useGameStore = create<GameState>()(
               {
                 id: 'reset',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                text: 'The slate is cleared. A brand-new kittens civilization begins.',
+                text: 'Interdimensional reboot complete. C-137 timeline initialized.',
                 type: 'success'
               }
             ],
             lastTick: Date.now()
           });
         }
+      },
+
+      synthesizeCertificate: (certificateType: 'bronze' | 'silver' | 'gold' | 'infinite') => {
+        const state = get();
+        const def = CERTIFICATES[certificateType];
+        if (!def) return;
+
+        // Check costs
+        let canAfford = true;
+        const res = JSON.parse(JSON.stringify(state.resources)) as GameState['resources'];
+
+        if (def.costs.science && (!res.science || res.science.amount < def.costs.science)) {
+          canAfford = false;
+        }
+
+        const resCosts: { key: ResourceType; amount: number }[] = [
+          { key: 'parchment', amount: def.costs.parchment }
+        ];
+        if (def.costs.beam) resCosts.push({ key: 'beam', amount: def.costs.beam });
+        if (def.costs.slab) resCosts.push({ key: 'slab', amount: def.costs.slab });
+        if (def.costs.plate) resCosts.push({ key: 'plate', amount: def.costs.plate });
+
+        for (const costItem of resCosts) {
+          if (!res[costItem.key] || res[costItem.key].amount < costItem.amount) {
+            canAfford = false;
+          }
+        }
+
+        if (!canAfford) {
+          state.addLog(`Cannot synthesize ${def.name}. Insufficient materials!`, 'warn');
+          return;
+        }
+
+        // Deduct
+        if (def.costs.science) {
+          res.science.amount -= def.costs.science;
+        }
+        for (const costItem of resCosts) {
+          res[costItem.key].amount -= costItem.amount;
+        }
+
+        // Add active certificate
+        const newActive: ActiveCertificateBoost = {
+          id: Math.random().toString(),
+          certificateType,
+          name: def.name,
+          timeRemaining: def.duration,
+          totalDuration: def.duration,
+          boostPercent: def.boostPercent
+        };
+
+        const currentActive = state.activeCertificates || [];
+        const currentCount = state.craftedCertificatesCount || { bronze: 0, silver: 0, gold: 0, infinite: 0 };
+        const updatedCount = {
+          ...currentCount,
+          [certificateType]: (currentCount[certificateType] || 0) + 1
+        };
+
+        set({
+          resources: res,
+          activeCertificates: [...currentActive, newActive],
+          craftedCertificatesCount: updatedCount
+        });
+
+        state.addLog(`Portal synthesizer online! Synthesised ${def.name}. Productivity boost activated!`, 'success');
       }
     }),
     {
-      name: 'kittens-incremental-storage',
+      name: 'rick-and-morty-incremental-storage',
       merge: (persistedState: any, currentState: GameState) => {
         if (!persistedState) return currentState;
 
@@ -752,6 +912,11 @@ export const useGameStore = create<GameState>()(
           };
         }
 
+        const mergedActiveCertificates = Array.isArray(persistedState.activeCertificates)
+          ? persistedState.activeCertificates
+          : [];
+        const mergedCraftedCertificatesCount = persistedState.craftedCertificatesCount || { bronze: 0, silver: 0, gold: 0, infinite: 0 };
+
         return {
           ...currentState,
           ...persistedState,
@@ -761,6 +926,8 @@ export const useGameStore = create<GameState>()(
           upgrades: mergedUpgrades,
           unlocks: mergedUnlocks,
           village: mergedVillage,
+          activeCertificates: mergedActiveCertificates,
+          craftedCertificatesCount: mergedCraftedCertificatesCount,
           theme: persistedState.theme === 'light' ? 'light' : 'dark',
           buyMultiplier: (persistedState.buyMultiplier === 1 || persistedState.buyMultiplier === 5 || persistedState.buyMultiplier === 25) 
             ? persistedState.buyMultiplier 

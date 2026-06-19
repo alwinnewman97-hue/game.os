@@ -67,6 +67,15 @@ export interface GameLogMessage {
   type: 'info' | 'success' | 'warn' | 'season' | 'death';
 }
 
+export interface ActiveCertificateBoost {
+  id: string;
+  certificateType: 'bronze' | 'silver' | 'gold' | 'infinite';
+  name: string;
+  timeRemaining: number; // in seconds
+  totalDuration: number; // original duration in seconds
+  boostPercent: number; // e.g. 0.15 for 15%
+}
+
 export interface GameState {
   // Resources
   resources: Record<ResourceType, { amount: number; max: number }>;
@@ -93,6 +102,10 @@ export interface GameState {
     daysPassed: number;
     totalDays: number;
   };
+
+  // Portal Crafting & Morty Certificates
+  activeCertificates?: ActiveCertificateBoost[];
+  craftedCertificatesCount?: Record<string, number>;
 
   // Progression unlocks
   unlocks: {
@@ -130,4 +143,5 @@ export interface GameState {
   toggleSound: () => void;
   setTheme: (theme: 'dark' | 'light') => void;
   setBuyMultiplier: (multiplier: 1 | 5 | 25) => void;
+  synthesizeCertificate: (certificateType: 'bronze' | 'silver' | 'gold' | 'infinite') => void;
 }

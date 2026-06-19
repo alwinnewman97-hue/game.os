@@ -69,95 +69,96 @@ export default function TownTab({ store }: TownTabProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:p-6 md:p-8 flex-1 overflow-y-auto">
+    <div className="flex flex-col flex-1 pb-10">
       
       {/* COMPACT TOWN HUD */}
-      <div className="theme-bg-card border theme-border p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-          <div className="flex items-center gap-1.5 font-bold theme-text-main">
-            <Users size={14} className="theme-text-sec" />
-            <span>Kittens: {kittens.length}/{maxKittens}</span>
+      <div className="flex justify-between items-center pb-6 border-b border-white/5 mx-2 sm:mx-6 mt-4">
+        <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-widest leading-none">Clone Command Centre</span>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm select-none">
+          <div className="flex items-center gap-2 font-mono theme-text-main leading-none">
+            <Users size={14} className="text-neutral-500" />
+            <span>{kittens.length}<span className="text-neutral-600">/{maxKittens}</span></span>
           </div>
 
-          <div className="flex items-center gap-1 theme-text-sec">
-            <span>Morale: {store.village.happiness}%</span>
+          <div className="flex items-center gap-2 text-neutral-500 font-mono leading-none">
+            <span>Moraly: {store.village.happiness}%</span>
           </div>
 
-          <div className={`font-medium ${freeKittens > 0 ? 'text-amber-400 font-bold' : 'theme-text-muted'}`}>
-            Idle labor: {freeKittens}
+          <div className={`font-mono leading-none ${freeKittens > 0 ? 'text-cyan-400 font-bold' : 'text-neutral-600'}`}>
+            Idle: {freeKittens}
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {kittens.length < maxKittens && (
-            <button
-              onClick={() => {
-                store.forceAddKitten();
-                if (store.soundEnabled) playClickSound('success');
-              }}
-              className="text-[10px] uppercase font-extrabold theme-text-main bg-amber-400 px-2.5 py-1.5 rounded transition-all active:scale-[0.98] cursor-pointer"
-            >
-              Hire Stray
-            </button>
-          )}
-
-          {kittens.length > 0 && freeKittens < kittens.length && (
-            <button
-              onClick={handleUnassignAll}
-              className="text-[10px] uppercase font-bold theme-text-muted border theme-border hover:theme-text-main px-2.5 py-1.5 rounded transition-colors cursor-pointer"
-            >
-              Recall All
-            </button>
-          )}
         </div>
       </div>
 
+      {/* QUICK LABOUR ACTIONS */}
+      <div className="flex items-center gap-3 mx-2 sm:mx-6 mt-6 mb-8 select-none">
+        {kittens.length < maxKittens && (
+          <button
+            onClick={() => {
+              store.forceAddKitten();
+              if (store.soundEnabled) playClickSound('success');
+            }}
+            className="text-[10px] uppercase tracking-widest font-bold theme-text-main bg-white/10 hover:bg-white/20 px-6 py-3 rounded-full transition-all active:scale-95 cursor-pointer"
+          >
+            Clone Alternate
+          </button>
+        )}
+
+        {kittens.length > 0 && freeKittens < kittens.length && (
+          <button
+            onClick={handleUnassignAll}
+            className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 border border-white/10 hover:text-white px-6 py-3 rounded-full transition-colors cursor-pointer"
+          >
+            Recall All
+          </button>
+        )}
+      </div>
+
       {/* JOBS SECTION */}
-      <div>
-        <div className="space-y-1.5">
-          {(Object.entries(JOBS) as [JobType, typeof JOBS[JobType]][]).map(([id, job]) => {
-            // Unlocks preconditions
-            if (id === 'miner' && !store.unlocks.minerals) return null;
-            if (id === 'scholar' && store.buildings.library === 0) return null;
-            if (id === 'priest' && !store.unlocks.culture) return null;
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+        {(Object.entries(JOBS) as [JobType, typeof JOBS[JobType]][]).map(([id, job]) => {
+          if (id === 'miner' && !store.unlocks.minerals) return null;
+          if (id === 'scholar' && store.buildings.library === 0) return null;
+          if (id === 'priest' && !store.unlocks.culture) return null;
 
-            const count = jobCounts[id];
+          const count = jobCounts[id];
 
-            return (
-              <div 
-                key={id}
-                className="theme-bg-card border theme-border p-2.5 rounded-xl flex items-center justify-between gap-4 hover:theme-border-active transition-all"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="text-sm shrink-0">
-                    {id === 'farmer' ? '🌾' : id === 'woodcutter' ? '📯' : id === 'scholar' ? '🧪' : id === 'miner' ? '⛏️' : '🔥'}
+          return (
+            <div 
+              key={id}
+              className="p-5 lg:p-6 flex flex-col justify-between gap-4 transition-all duration-[400ms] ease-out border theme-border hover:border-white/40 theme-bg-card/50 backdrop-blur-md"
+            >
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 w-full">
+                <div className="flex items-center gap-4 min-w-0">
+                  <span className="text-2xl shrink-0">
+                    {id === 'farmer' ? '🌱' : id === 'woodcutter' ? '⚡' : id === 'scholar' ? '🔬' : id === 'miner' ? '⛏️' : '🔊'}
                   </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs theme-text-main leading-none">{job.name}</span>
+                  <div className="min-w-0 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-lg tracking-wide theme-text-main leading-none">{job.name}</span>
                       {count > 0 && (
-                        <span className="text-[9px] font-mono theme-text-main bg-neutral-500/10 px-1.5 py-0.2 rounded font-black">
+                        <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-white text-black leading-none rounded-sm">
                           {count}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-emerald-500 font-mono inline-block mt-0.5">{job.effectsDesc}</span>
+                    <span className="text-[10px] text-emerald-500 font-mono leading-none">{job.effectsDesc}</span>
                   </div>
                 </div>
 
                 {/* Direct quick action assigners */}
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-start xl:self-center">
                   <button 
                     onClick={() => handleUnassignMultiple(id, store.buyMultiplier || 1)}
                     disabled={count === 0}
-                    className="w-8 h-8 flex items-center justify-center theme-bg-app border theme-border theme-text-sec hover:theme-text-main disabled:opacity-20 rounded-lg active:scale-95 transition-all font-bold cursor-pointer"
+                    className="w-10 h-10 flex items-center justify-center bg-transparent border border-white/20 text-white hover:bg-white/10 disabled:opacity-20 rounded-full active:scale-95 transition-all cursor-pointer"
                   >
-                    <Minus size={11} />
+                    <Minus size={14} />
                   </button>
 
                   <button 
                     onClick={() => handleAutoAssign(id)}
-                    className="px-2 py-1 text-[9px] uppercase font-black theme-text-muted hover:theme-text-main transition-colors cursor-pointer"
+                    className="px-3 h-10 flex items-center justify-center text-[10px] uppercase font-bold text-neutral-500 hover:text-white transition-colors cursor-pointer"
                   >
                     All
                   </button>
@@ -165,34 +166,34 @@ export default function TownTab({ store }: TownTabProps) {
                   <button 
                     onClick={() => handleAssignMultiple(id, store.buyMultiplier || 1)}
                     disabled={freeKittens === 0}
-                    className="w-8 h-8 flex items-center justify-center theme-bg-app border theme-border theme-text-sec hover:theme-text-main disabled:opacity-20 rounded-lg active:scale-95 transition-all font-bold cursor-pointer"
+                    className="w-10 h-10 flex items-center justify-center bg-transparent border border-white/20 text-white hover:bg-white/10 disabled:opacity-20 rounded-full active:scale-95 transition-all cursor-pointer"
                   >
-                    <Plus size={11} />
+                    <Plus size={14} />
                   </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* INDIVIDUAL KITTENS POPULATION MATRIX */}
       {kittens.length > 0 && (
-        <div className="mt-1">
-          <span className="text-[10px] uppercase font-black tracking-widest theme-text-muted block mb-2">Guild Registry</span>
+        <div className="mt-12 mx-2 sm:mx-6 select-none animate-fadeIn">
+          <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-widest leading-none block mb-6">Portal Clone Directory</span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fadeIn">
             {kittens.map((kitten) => (
               <div 
                 key={kitten.id}
-                className="theme-bg-card border theme-border p-2 rounded-lg flex items-center justify-between gap-3 hover:theme-border-active transition-colors"
+                className="p-4 border border-white/5 hover:border-white/20 transition-colors bg-white/[0.02] flex flex-col justify-between gap-4"
               >
                 <div className="min-w-0">
-                  <span className="font-extrabold text-[11px] theme-text-main block truncate leading-tight">
+                  <span className="font-bold text-sm tracking-wide theme-text-main block truncate leading-tight mb-1.5 text-neutral-200">
                     {kitten.name} {kitten.surname}
                   </span>
-                  <span className="text-[9px] theme-text-sec font-mono truncate block mt-0.5">
-                    LVL {kitten.level} • {kitten.trait}
+                  <span className="text-[10px] text-neutral-500 font-mono truncate block uppercase">
+                    GEN {kitten.level} • {kitten.trait}
                   </span>
                 </div>
 
@@ -200,19 +201,19 @@ export default function TownTab({ store }: TownTabProps) {
                 <select
                   value={kitten.job}
                   onChange={(e) => handleAssignJob(kitten.id, e.target.value as any)}
-                  className="theme-bg-panel border theme-border theme-text-main text-[10px] px-1 py-0.5 rounded w-24 shrink-0 focus:outline-none focus:border-neutral-400 cursor-pointer font-sans"
+                  className="bg-black border border-white/10 text-white text-[11px] px-3 py-2 shrink-0 focus:outline-none focus:border-white/40 cursor-pointer font-sans"
                 >
                   <option value="unemployed">💤 Idle</option>
-                  <option value="farmer">🌾 Farm</option>
-                  <option value="woodcutter">🪓 Wood</option>
+                  <option value="farmer">🌱 Mega-Seed Cultivator</option>
+                  <option value="woodcutter">⚡ Plutonium Harvester</option>
                   {store.buildings.library > 0 && (
-                    <option value="scholar">🧪 Scholar</option>
+                    <option value="scholar">🔬 Lab Assistant</option>
                   )}
                   {store.unlocks.minerals && (
-                    <option value="miner">⛏️ Miner</option>
+                    <option value="miner">⛏️ Crystal Digger</option>
                   )}
                   {store.unlocks.culture && (
-                    <option value="priest">🔥 Priest</option>
+                    <option value="priest">🔊 Schwifty Chanter</option>
                   )}
                 </select>
               </div>

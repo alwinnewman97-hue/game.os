@@ -20,15 +20,13 @@ import {
   Sun,
   Moon,
   Eye,
-  EyeOff,
-  Terminal,
   Sliders,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Trash2
 } from 'lucide-react';
 
 import ResourcePanel from './components/ResourcePanel';
-import ConsoleLogs from './components/ConsoleLogs';
 import BonfireTab from './components/BonfireTab';
 import TownTab from './components/TownTab';
 import ScienceTab from './components/ScienceTab';
@@ -49,7 +47,6 @@ export default function App() {
   
   // Custom layout view togglers to manage display density - collapsed on small mobile screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
-  const [isLogsOpen, setIsLogsOpen] = useState(window.innerWidth >= 768);
 
   // Synchronize document attribute with theme selection
   useEffect(() => {
@@ -91,7 +88,7 @@ export default function App() {
       store.tick(offlineSeconds);
       
       setOfflineProgressMsg(
-        `Welcome Back, Elder Kitten! While you were offline for ${timeStr}, your kittens calculated the cosmos, cultivated fresh catnip, and kept the campfires warm.`
+        `Welcome Back, Portal Master! While you were offline for ${timeStr}, your clones maintained the laboratories, harvested fresh Mega Seeds, and kept the fusion cores warm.`
       );
     }
 
@@ -187,7 +184,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden theme-bg-app theme-text-main antialiased font-mono max-w-full">
+    <div className="flex flex-col md:flex-row h-[100dvh] overflow-hidden theme-bg-app theme-text-main antialiased font-sans max-w-full relative selection:bg-white/10 selection:theme-text-main">
       
       {/* CINEMATIC STARTUP SPLASH SCREEN WITH INTERACTIVE IMMERSIVE LAUNCHER */}
       <AnimatePresence mode="wait">
@@ -197,7 +194,7 @@ export default function App() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="fixed inset-0 z-50 overflow-hidden"
+            className="fixed inset-0 z-[100] overflow-hidden"
           >
             <SplashStartup 
               onEnter={() => setShowSplash(false)} 
@@ -209,27 +206,27 @@ export default function App() {
 
       {/* GLOBAL TOAST NOTIFIER */}
       {showSuccessToast && (
-        <div className="fixed top-4 right-4 z-50 bg-neutral-900/90 border border-neutral-700/50 text-neutral-250 p-3 h-14 rounded-xl flex items-center gap-2 shadow-2xl backdrop-blur-md animate-fade-in text-xs">
-          <Sparkles size={14} className="text-neutral-300" />
-          <span>Local storage persistence established. Progress automatically saved offline.</span>
+        <div className="fixed top-6 right-6 z-[90] theme-bg-card border theme-border p-3 h-14 rounded-2xl flex items-center gap-3 shadow-2xl backdrop-blur-md animate-fade-in text-xs">
+          <Sparkles size={16} className="theme-text-main" />
+          <span className="font-semibold tracking-wide">Persistence established. Progress saved offline.</span>
         </div>
       )}
 
       {/* OFFLINE RESUME MODAL POPUP */}
       {offlineProgressMsg && (
-        <div className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="theme-bg-card border theme-border p-6 rounded-2xl max-w-md w-full flex flex-col gap-4 shadow-2xl">
-            <h3 className="text-sm uppercase font-black tracking-widest theme-text-main flex items-center gap-2">
-              <Award size={18} />
-              <span>Offline Chronoscopy</span>
+        <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="theme-bg-card border theme-border p-8 rounded-[2rem] max-w-md w-full flex flex-col gap-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+            <h3 className="text-xl font-black tracking-tighter theme-text-main flex items-center gap-3 uppercase">
+              <Award size={24} />
+              <span>Chronoscopy</span>
             </h3>
-            <p className="text-xs theme-text-sec leading-relaxed font-sans">{offlineProgressMsg}</p>
+            <p className="text-sm theme-text-sec leading-relaxed font-sans">{offlineProgressMsg}</p>
             <button
               onClick={() => {
                 setOfflineProgressMsg(null);
                 if (store.soundEnabled) playClickSound('success');
               }}
-              className="theme-accent-bg text-xs font-black uppercase tracking-wider py-3 rounded-lg mt-2 cursor-pointer transition-transform duration-100 active:scale-95"
+              className="theme-text-main border theme-border py-4 rounded-xl mt-4 cursor-pointer hover:bg-white/5 font-bold uppercase tracking-widest text-xs transition-all active:scale-[0.98]"
             >
               Resume Duties
             </button>
@@ -237,328 +234,180 @@ export default function App() {
         </div>
       )}
 
-      {/* HEADER NAVIGATION BAR */}
-      <header className="theme-bg-panel border-b theme-border h-16 shrink-0 px-3 sm:px-5 flex items-center justify-between select-none shadow-md">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="theme-bg-card border theme-border p-1.5 sm:p-2 rounded-xl text-neutral-400 shadow-inner">
-            <Flame size={18} className="theme-text-main sm:w-[20px] sm:h-[20px]" />
-          </div>
-          <div>
-            <h1 className="text-xs sm:text-sm font-black tracking-wider sm:tracking-[0.25em] theme-text-main flex items-center gap-1.5 sm:gap-2 uppercase">
-              <span className="hidden min-[400px]:inline">Kittens Incremental</span>
-              <span className="min-[400px]:hidden">Kittens</span>
-            </h1>
-            <p className="text-[10px] theme-text-sec hidden sm:block tracking-widest leading-none mt-1">ELEGANT COGNITIVE STRATEGY</p>
-          </div>
-        </div>
-
-        {/* TIMING, SPEED, AUDIO, THEME, AND VIEW CONFIGURATORS */}
-        <div className="flex items-center gap-2 sm:gap-3 text-xs font-bold text-gray-400">
-          
-          {/* TOGGLE SIDEBAR CABINET */}
-          <button
-            onClick={() => {
-              setIsSidebarOpen(!isSidebarOpen);
-              if (store.soundEnabled) playClickSound('click');
-            }}
-            className={`p-2 theme-hover-bg border rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] uppercase font-bold ${
-              isSidebarOpen ? 'theme-border-active theme-text-main' : 'theme-border theme-text-muted'
-            }`}
-            title={isSidebarOpen ? "Collaspe Left Resource Shelf" : "Expand Left Resource Shelf"}
-          >
-            {isSidebarOpen ? <Eye size={13} className="theme-text-main" /> : <EyeOff size={13} className="theme-text-muted" />}
-            <span className="hidden lg:inline">Resources</span>
-          </button>
-
-          {/* TOGGLE REACTION CHRONICLES LOGGER */}
-          <button
-            onClick={() => {
-              setIsLogsOpen(!isLogsOpen);
-              if (store.soundEnabled) playClickSound('click');
-            }}
-            className={`p-2 theme-hover-bg border rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] uppercase font-bold ${
-              isLogsOpen ? 'theme-border-active theme-text-main' : 'theme-border theme-text-muted'
-            }`}
-            title={isLogsOpen ? "Collapse Activity Chronicles Log" : "Expand Activity Chronicles Log"}
-          >
-            {isLogsOpen ? <Eye size={13} className="theme-text-main" /> : <EyeOff size={13} className="theme-text-muted" />}
-            <span className="hidden lg:inline">Logs</span>
-          </button>
-          
-          {/* THEME TOGGLE */}
-          <button
-            onClick={() => {
-              const nextTheme = store.theme === 'dark' ? 'light' : 'dark';
-              store.setTheme(nextTheme);
-              if (store.soundEnabled) playClickSound('click');
-            }}
-            className="p-2 theme-hover-bg border theme-border rounded-lg theme-text-sec hover:theme-text-main transition-all cursor-pointer flex items-center justify-center"
-            title={store.theme === 'dark' ? "Switch to Light Monochrome" : "Switch to Dark Monochrome"}
-          >
-            {store.theme === 'dark' ? <Sun size={14} className="theme-text-main" /> : <Moon size={14} className="theme-text-main" />}
-          </button>
-
-          {/* SOUND CONTROL */}
-          <button
-            onClick={() => {
-              store.toggleSound();
-              if (!store.soundEnabled) {
-                playClickSound('success');
-              }
-            }}
-            className="p-2 theme-hover-bg border theme-border rounded-lg theme-text-sec hover:theme-text-main transition-all cursor-pointer flex items-center justify-center"
-            title={store.soundEnabled ? "Mute Game Effects" : "Unmute Game Effects"}
-          >
-            {store.soundEnabled ? <Volume2 size={14} className="theme-text-main" /> : <VolumeX size={14} className="theme-text-muted" />}
-          </button>
-
-          {/* GAME VELOCITY ADJUSTMENTS */}
-          <div className="flex items-center theme-bg-card border theme-border p-1 rounded-lg gap-0.5">
-            <button
-              onClick={() => {
-                store.setGameSpeed(0);
-                if (store.soundEnabled) playClickSound('click');
-              }}
-              className={`p-1.5 rounded-md cursor-pointer transition-all ${store.gameSpeed === 0 ? 'theme-accent-bg font-extrabold' : 'theme-text-sec hover:theme-text-main'}`}
-              title="Pause Ticks"
-            >
-              <Pause size={12} />
-            </button>
-            <button
-              onClick={() => {
-                store.setGameSpeed(1);
-                if (store.soundEnabled) playClickSound('click');
-              }}
-              className={`px-2 py-1 text-[10px] rounded-md font-extrabold cursor-pointer transition-all ${store.gameSpeed === 1 ? 'theme-accent-bg font-black' : 'theme-text-sec hover:theme-text-main'}`}
-              title="Normal speed (1x)"
-            >
-              1X
-            </button>
-            <button
-              onClick={() => {
-                store.setGameSpeed(4);
-                if (store.soundEnabled) playClickSound('success');
-              }}
-              className={`px-2 py-1 text-[10px] rounded-md font-extrabold cursor-pointer transition-all ${store.gameSpeed === 4 ? 'theme-accent-bg font-black' : 'theme-text-sec hover:theme-text-main'}`}
-              title="Speed Booster (4x)"
-            >
-              4X
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
-              if (confirm("Reset kittens civilisation? Progress will be lost.")) {
-                store.resetGame();
-              }
-            }}
-            className="text-[10px] uppercase font-bold theme-text-muted hover:theme-text-main hover:border-red-500/50 px-2.5 py-1.5 border theme-border rounded-lg transition-colors cursor-pointer hidden sm:block"
-          >
-            Reset Progress
-          </button>
-        </div>
-      </header>
-
-      {/* CORE WORKSPACE GRID */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden max-h-[calc(100vh-64px)]">
+      {/* AWWWARDS-STYLE SIDE NAVIGATION DOCK */}
+      <nav className="fixed md:static bottom-4 left-4 right-4 md:inset-y-0 md:left-0 z-50 md:w-28 md:h-screen bg-black/40 md:bg-transparent backdrop-blur-3xl md:backdrop-blur-none border border-white/5 md:border-none md:border-r theme-border rounded-[2rem] md:rounded-none flex flex-row md:flex-col items-center justify-between p-2 md:py-8 shadow-2xl md:shadow-none shrink-0">
         
-        {/* RESOURCE CONTROL MATRIX (LEFT COLUMN/DRAWER OVERLAY) */}
-        <AnimatePresence>
-          {isSidebarOpen && (
-            <>
-              {/* Sidebar/Drawer body */}
-              <motion.div
-                key="resource-sidebar"
-                initial={{ x: -285, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -285, opacity: 0 }}
-                transition={{ type: 'spring', damping: 24, stiffness: 200 }}
-                className="fixed md:static inset-y-16 md:inset-y-auto left-0 z-40 w-[285px] md:w-72 h-[calc(100vh-64px)] md:h-full flex flex-col shrink-0 overflow-hidden shadow-2xl md:shadow-none theme-bg-panel border-r theme-border"
-              >
-                <ResourcePanel
-                  store={store}
-                  catnipRate={computedCatnipRate}
-                  woodRate={computedWoodRate}
-                  scienceRate={computedScienceRate}
-                  mineralsRate={computedMineralsRate}
-                  cultureRate={computedCultureRate}
-                  ironRate={computedIronRate}
-                />
-              </motion.div>
+        {/* Top items: Logo and Primary Tabs */}
+        <div className="flex flex-row md:flex-col items-center gap-1 md:gap-6 w-full">
+          <div className="hidden md:flex items-center justify-center w-14 h-14 rounded-2xl theme-bg-card border theme-border mb-4 shadow-[0_0_30px_rgba(255,255,255,0.03)] opacity-80 hover:opacity-100 transition-opacity">
+            <Flame size={24} className="theme-text-main"/>
+          </div>
 
-              {/* Backdrop covering screen only on mobile sizes */}
-              <motion.div
-                key="resource-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                onClick={() => setIsSidebarOpen(false)}
-                className="fixed inset-0 top-16 bg-black/50 backdrop-blur-xs z-30 md:hidden"
-              />
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* COMPONENT LAYOUT TABS (CENTER CABINET) */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden theme-bg-app border-r theme-border">
-          
-          {/* TAB BAR NAVIGATION */}
-          <nav className="h-13 theme-bg-panel border-b theme-border shrink-0 flex items-center px-4 sm:px-6 gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth relative select-none">
+          <div className="flex flex-row md:flex-col gap-1.5 w-full justify-around md:justify-start px-2 md:px-4">
             <button
               onClick={() => handleTabChange('bonfire')}
-              className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+              className={`p-3 md:py-4 md:w-full rounded-2xl flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === 'bonfire' 
-                  ? 'theme-border-active theme-text-main font-extrabold' 
-                  : 'border-transparent theme-text-muted hover:theme-text-sec'
+                  ? 'portal-tab-btn-active scale-100' 
+                  : 'text-neutral-500 scale-95'
               }`}
             >
-              <Sparkle size={12} />
-              <span>Bonfire</span>
+              <Sparkle size={18} className={activeTab === 'bonfire' ? 'text-emerald-400 animate-pulse' : 'text-neutral-400'} />
+              <span className="text-[9px] md:text-[10px] hidden sm:block font-sans">Citadel</span>
+              {activeTab === 'bonfire' && (
+                <div className="portal-tab-indicator absolute bottom-0 left-6 right-6 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
+              )}
             </button>
 
             {store.unlocks.village && (
               <button
                 onClick={() => handleTabChange('town')}
-                className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                className={`p-3 md:py-4 md:w-full rounded-2xl flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === 'town' 
-                    ? 'theme-border-active theme-text-main font-extrabold' 
-                    : 'border-transparent theme-text-muted hover:theme-text-sec'
+                    ? 'portal-tab-btn-active scale-100' 
+                    : 'text-neutral-500 scale-95'
                 }`}
               >
-                <Users size={12} />
-                <span>Small Village</span>
+                <Users size={18} className={activeTab === 'town' ? 'text-emerald-400 animate-pulse' : 'text-neutral-400'} />
+                <span className="text-[9px] md:text-[10px] hidden sm:block font-sans">Clone Bay</span>
+                {activeTab === 'town' && (
+                  <div className="portal-tab-indicator absolute bottom-0 left-6 right-6 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
+                )}
               </button>
             )}
 
             {store.unlocks.science && (
               <button
                 onClick={() => handleTabChange('science')}
-                className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                className={`p-3 md:py-4 md:w-full rounded-2xl flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === 'science' 
-                    ? 'theme-border-active theme-text-main font-extrabold' 
-                    : 'border-transparent theme-text-muted hover:theme-text-sec'
+                    ? 'portal-tab-btn-active scale-100' 
+                    : 'text-neutral-500 scale-95'
                 }`}
               >
-                <FlaskConical size={12} />
-                <span>Science</span>
+                <FlaskConical size={18} className={activeTab === 'science' ? 'text-emerald-400 animate-pulse' : 'text-neutral-400'} />
+                <span className="text-[9px] md:text-[10px] hidden sm:block font-sans">Labs</span>
+                {activeTab === 'science' && (
+                  <div className="portal-tab-indicator absolute bottom-0 left-6 right-6 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
+                )}
               </button>
             )}
 
             {store.unlocks.workshop && (
               <button
                 onClick={() => handleTabChange('workshop')}
-                className={`shrink-0 flex items-center gap-1.5 h-full text-[11px] sm:text-xs font-bold uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                className={`p-3 md:py-4 md:w-full rounded-2xl flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === 'workshop' 
-                    ? 'theme-border-active theme-text-main font-extrabold' 
-                    : 'border-transparent theme-text-muted hover:theme-text-sec'
+                    ? 'portal-tab-btn-active scale-100' 
+                    : 'text-neutral-500 scale-95'
                 }`}
               >
-                <Hammer size={12} />
-                <span>Workshop</span>
+                <Hammer size={18} className={activeTab === 'workshop' ? 'text-emerald-400 animate-pulse' : 'text-neutral-400'} />
+                <span className="text-[9px] md:text-[10px] hidden sm:block font-sans">Refine</span>
+                {activeTab === 'workshop' && (
+                  <div className="portal-tab-indicator absolute bottom-0 left-6 right-6 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
+                )}
               </button>
             )}
-          </nav>
-
-          {/* COMPACT RESOURCE MINI-HUD (Shown only in Zen / Collapsed Resource Shelf mode) */}
-          {!isSidebarOpen && (
-            <div className="theme-bg-panel border-b theme-border px-6 py-2.5 flex flex-wrap gap-x-6 gap-y-1.5 items-center text-[11px] font-mono select-none animate-fade-in shadow-inner">
-              <span className="text-[9px] uppercase font-bold theme-text-sec tracking-widest mr-1 sm:block hidden">HUD Matrix:</span>
-              
-              {/* Catnip */}
-              <div className="flex items-center gap-1.5" title="Catnip status">
-                <span className="theme-text-muted">Catnip:</span>
-                <span className="theme-text-main font-bold">
-                  {Math.floor(store.resources.catnip.amount).toLocaleString()}
-                </span>
-                <span className={`text-[9.5px] font-bold ${computedCatnipRate >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                  ({computedCatnipRate >= 0 ? '+' : ''}{computedCatnipRate.toFixed(1)}/s)
-                </span>
-              </div>
-
-              {/* Wood */}
-              {store.unlocks.wood && (
-                <div className="flex items-center gap-1.5" title="Wood status">
-                  <span className="theme-text-muted">Wood:</span>
-                  <span className="theme-text-main font-bold">
-                    {Math.floor(store.resources.wood.amount).toLocaleString()}
-                  </span>
-                  <span className={`text-[9.5px] font-bold ${computedWoodRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-                    ({computedWoodRate >= 0 ? '+' : ''}{computedWoodRate.toFixed(2)}/s)
-                  </span>
-                </div>
-              )}
-
-              {/* Minerals */}
-              {store.unlocks.minerals && (
-                <div className="flex items-center gap-1.5" title="Minerals status">
-                  <span className="theme-text-muted">Minerals:</span>
-                  <span className="theme-text-main font-bold">
-                    {Math.floor(store.resources.minerals.amount).toLocaleString()}
-                  </span>
-                  <span className={`text-[9.5px] font-bold ${computedMineralsRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-                    ({computedMineralsRate >= 0 ? '+' : ''}{computedMineralsRate.toFixed(2)}/s)
-                  </span>
-                </div>
-              )}
-
-              {/* Iron */}
-              {store.unlocks.iron && (
-                <div className="flex items-center gap-1.5" title="Iron status">
-                  <span className="theme-text-muted">Iron:</span>
-                  <span className="theme-text-main font-bold">
-                    {Math.floor(store.resources.iron.amount).toLocaleString()}
-                  </span>
-                  <span className={`text-[9.5px] font-bold ${computedIronRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-                    ({computedIronRate >= 0 ? '+' : ''}{computedIronRate.toFixed(2)}/s)
-                  </span>
-                </div>
-              )}
-
-              {/* Science */}
-              {store.unlocks.science && (
-                <div className="flex items-center gap-1.5" title="Science status">
-                  <span className="theme-text-muted">Science:</span>
-                  <span className="theme-text-main font-bold">
-                    {Math.floor(store.resources.science.amount).toLocaleString()}
-                  </span>
-                  <span className={`text-[9.5px] font-bold ${computedScienceRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-                    ({computedScienceRate >= 0 ? '+' : ''}{computedScienceRate.toFixed(1)}/s)
-                  </span>
-                </div>
-              )}
-
-              {/* Culture */}
-              {store.unlocks.culture && (
-                <div className="flex items-center gap-1.5" title="Culture status">
-                  <span className="theme-text-muted">Culture:</span>
-                  <span className="theme-text-main font-bold">
-                    {Math.floor(store.resources.culture.amount).toLocaleString()}
-                  </span>
-                  <span className={`text-[9.5px] font-bold ${computedCultureRate >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-                    ({computedCultureRate >= 0 ? '+' : ''}{computedCultureRate.toFixed(2)}/s)
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ACTIVE CABINET WINDOW */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            {currentTabComponent()}
           </div>
-
-          {/* CHRONICLES LOG CONSOLE (STATICALLY AT BOTTOM OUTLET) */}
-          {isLogsOpen && (
-            <div className="p-5 border-t theme-border theme-bg-panel shrink-0">
-              <ConsoleLogs logs={store.logs} />
-            </div>
-          )}
-
         </div>
 
-      </div>
+        {/* Bottom items: Utilities */}
+        <div className="flex flex-row md:flex-col items-center gap-3 md:gap-4 md:mt-auto pr-3 md:pr-0">
+          <button
+            onClick={() => {
+              const nextTheme = store.theme === 'dark' ? 'light' : 'dark';
+              store.setTheme(nextTheme);
+              if (store.soundEnabled) playClickSound('click');
+            }}
+            className="p-2.5 rounded-xl text-neutral-500 hover:text-neutral-300 transition-colors"
+          >
+            {store.theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={() => {
+              store.toggleSound();
+              if (!store.soundEnabled) playClickSound('success');
+            }}
+            className="p-2.5 rounded-xl text-neutral-500 hover:text-neutral-300 transition-colors hidden sm:block"
+          >
+            {store.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+        </div>
+      </nav>
 
+      {/* MAIN WORKSPACE AREA */}
+      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
+        
+        {/* SUPER MINIMAL TOP BAR */}
+        <header className="w-full shrink-0 pt-8 sm:pt-10 px-5 sm:px-10 flex flex-col gap-6 z-20 relative">
+          <div className="flex justify-between items-end relative">
+             <h1 className="text-5xl sm:text-7xl font-black tracking-[-0.04em] opacity-5 theme-text-main uppercase leading-none select-none absolute -top-4 -left-2 pointer-events-none origin-left transform-gpu mix-blend-overlay">
+               {activeTab === 'bonfire' ? 'Citadel' : activeTab === 'town' ? 'Clone Bay' : activeTab === 'science' ? 'Labs' : 'Refinery'}
+             </h1>
+             
+             {/* Spacing element to push controls to the right */}
+             <div className="flex-1"></div>
+
+             <div className="flex items-center gap-4 z-10">
+                <div className="flex items-center theme-bg-card border theme-border rounded-xl p-1 gap-1 shadow-sm backdrop-blur-md">
+                  <button
+                    onClick={() => { store.setGameSpeed(0); if (store.soundEnabled) playClickSound('click'); }}
+                    className={`p-2 rounded-lg cursor-pointer transition-all ${store.gameSpeed === 0 ? 'bg-white/10 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                  >
+                    <Pause size={14} />
+                  </button>
+                  <button
+                    onClick={() => { store.setGameSpeed(1); if (store.soundEnabled) playClickSound('click'); }}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-black cursor-pointer transition-all ${store.gameSpeed === 1 ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
+                  >
+                    1X
+                  </button>
+                  <button
+                    onClick={() => { store.setGameSpeed(4); if (store.soundEnabled) playClickSound('success'); }}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-black cursor-pointer transition-all ${store.gameSpeed === 4 ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
+                  >
+                    4X
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    if (confirm("Initiate multiversal reboot? Timeline progress will be lost.")) {
+                      store.resetGame();
+                      window.location.reload();
+                    }
+                  }}
+                  className="p-2.5 rounded-xl text-neutral-600 hover:text-red-500 transition-colors hidden sm:block"
+                  title="Erase Civilisation"
+                >
+                  <Trash2 size={16} />
+                </button>
+             </div>
+          </div>
+
+          {/* FLOATING TOP RESOURCES HUD */}
+          <div className="z-20 w-full animate-fade-in relative mt-2 mb-4">
+             <ResourcePanel
+                store={store}
+                catnipRate={computedCatnipRate}
+                woodRate={computedWoodRate}
+                scienceRate={computedScienceRate}
+                mineralsRate={computedMineralsRate}
+                cultureRate={computedCultureRate}
+                ironRate={computedIronRate}
+              />
+          </div>
+        </header>
+
+        {/* ACTIVE TAB CONTENT WINDOW */}
+        <div className="flex-1 overflow-x-hidden overflow-y-auto px-5 sm:px-10 pb-32 md:pb-12 pt-2 relative z-10 scrollbar-none">
+          {currentTabComponent()}
+        </div>
+
+
+
+      </main>
     </div>
   );
 }

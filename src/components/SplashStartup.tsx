@@ -13,11 +13,11 @@ export default function SplashStartup({ onEnter, soundEnabled }: SplashStartupPr
   const [isIosButNotStandalone, setIsIosButNotStandalone] = useState(false);
 
   const diagnostics = [
-    'COLD BIOSPHERE COGNITION... UNLOCKED',
-    'ORBITAL STARLIGHT CHRONOSOMES... ACTIVE',
-    'FELINE STRATEGIC SYNAPSE CORRELATION... ENGAGED',
-    'COLONY HARMONICS SUBSTATION... SECURED',
-    'INCREMENTAL PIPELINE PROTOCOL READY.'
+    'COLD DIMENSIONAL MATRIX... UNLOCKED',
+    'PORTAL FLUID CHRONOMETER... ACTIVE',
+    'MORTY MUTABLE COGNITION COMPLIANCE... ENGAGED',
+    'CITADEL CLONE BAY SUITE... SECURED',
+    'PLUTONUM INJECTOR CORE STABLE... READY.'
   ];
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function SplashStartup({ onEnter, soundEnabled }: SplashStartupPr
         </div>
         <div className="flex items-center gap-1.5 font-mono text-[9px] tracking-widest text-emerald-500">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-          <span>CORE_STABLE_iOS</span>
+          <span>PORTAL_C137_STABLE</span>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export default function SplashStartup({ onEnter, soundEnabled }: SplashStartupPr
             transition={{ delay: 0.3, duration: 0.8 }}
             className="text-lg md:text-xl font-sans font-black tracking-widest uppercase text-neutral-100"
           >
-            Kittens Incremental
+            Citadel Incremental
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0 }}
@@ -105,7 +105,7 @@ export default function SplashStartup({ onEnter, soundEnabled }: SplashStartupPr
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-[10px] uppercase font-mono tracking-widest text-neutral-400"
           >
-            Starlight Cosmogony Protocol
+            Multiversal Clone Engine Protocol
           </motion.p>
         </div>
 
@@ -150,7 +150,7 @@ export default function SplashStartup({ onEnter, soundEnabled }: SplashStartupPr
             className="w-full min-h-[48px] px-6 rounded-xl text-xs uppercase font-extrabold tracking-widest text-neutral-950 bg-amber-400 active:bg-amber-500 shadow-xl shadow-amber-500/10 active:scale-[0.98] transition-all transform flex items-center justify-center gap-2 cursor-pointer select-none"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            <span>BOOT SIMULATION PIPELINE</span>
+            <span>LAUNCH PORTAL SIMULATION</span>
             <ChevronRight size={14} className="stroke-[3]" />
           </button>
         </motion.div>

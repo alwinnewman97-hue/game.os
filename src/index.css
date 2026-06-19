@@ -6,35 +6,35 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Custom Monochrome styles */
+/* Custom Rick & Morty Sci-Fi styles */
 :root {
-  --bg-app: #050505;
-  --bg-panel: #0c0c0e;
-  --bg-card: #121214;
-  --bg-hover: #1e1e22;
-  --border-main: #222226;
-  --border-active: #ffffff;
-  --text-main: #f5f5f7;
-  --text-sec: #a1a1aa;
-  --text-muted: #52525b;
-  --accent-color: #ffffff;
-  --accent-text: #050505;
-  --toggle-inactive: #27272a;
+  --bg-app: #050811; /* Infinite cosmic space deep void */
+  --bg-panel: #0a0e1c; /* Tech space paneling */
+  --bg-card: #0f162b; /* Portal gun computer unit */
+  --bg-hover: #1b2647; /* Cyber highlighted state */
+  --border-main: #123524; /* Chemical portal green-infused dark slate */
+  --border-active: #39ff14; /* Glowing Neon Portal Green! */
+  --text-main: #e2f3f5; /* Pale cyber-teal white (Rick's coat) */
+  --text-sec: #00ffca; /* Luminescent green portal energy */
+  --text-muted: #577d88; /* Cosmic dust teal gray */
+  --accent-color: #39ff14; /* Neon Portal Liquid */
+  --accent-text: #041201; /* High contrast text on green */
+  --toggle-inactive: #161e38;
 }
 
 [data-theme='light'] {
-  --bg-app: #fafafa;
-  --bg-panel: #f4f4f5;
-  --bg-card: #ffffff;
-  --bg-hover: #e4e4e7;
-  --border-main: #e4e4e7;
-  --border-active: #050505;
-  --text-main: #050505;
-  --text-sec: #52525b;
-  --text-muted: #a1a1aa;
-  --accent-color: #050505;
-  --accent-text: #ffffff;
-  --toggle-inactive: #e4e4e7;
+  --bg-app: #eef7f2; /* Lime-cloud sterile environment */
+  --bg-panel: #ffffff; /* Lab station top */
+  --bg-card: #e3f4ec; /* Cyber chamber light background */
+  --bg-hover: #cfead9; /* Light portal chemical splash */
+  --border-main: #b8dfcd; /* Soft chemical line */
+  --border-active: #05b144; /* Standard green portal active */
+  --text-main: #0b2114; /* Obsidian moss */
+  --text-sec: #088b4d; /* Saturated portal tube green */
+  --text-muted: #628271; /* Distant planet green-gray */
+  --accent-color: #fbd512; /* Morty Yellow! */
+  --accent-text: #050a04; /* High-contrast text on yellow */
+  --toggle-inactive: #cee3d8;
 }
 
 /* Structural Theme Utility classes */
@@ -49,10 +49,22 @@
 .theme-accent-bg { background-color: var(--accent-color); color: var(--accent-text); transition: background-color 0.2s ease, color 0.2s ease; }
 .theme-hover-bg:hover { background-color: var(--bg-hover); }
 
-/* Custom gorgeous scrollbar aesthetics */
+/* Sci-fi matrix background pattern on dark mode */
+body {
+  background-image: 
+    radial-gradient(ellipse at top, rgba(57, 255, 20, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 10% 20%, rgba(0, 255, 202, 0.03) 0%, transparent 50%);
+}
+
+[data-theme='light'] body {
+  background-image: 
+    radial-gradient(ellipse at top, rgba(5, 177, 68, 0.04) 0%, transparent 60%);
+}
+
+/* Custom gorgeous scrollbar aesthetics - Portal fluid */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -62,10 +74,12 @@
 ::-webkit-scrollbar-thumb {
   background: var(--border-main);
   border-radius: 9999px;
+  border: 1px solid var(--bg-app);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--border-active);
+  box-shadow: 0 0 10px var(--border-active);
 }
 
 /* Keyframe animations */
@@ -89,3 +103,38 @@
   background-color: var(--border-main);
   color: var(--text-main);
 }
+
+/* Animated portal tab button style for Rick and Morty theme */
+.portal-tab-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.portal-tab-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: rgba(57, 255, 20, 0.2);
+}
+
+[data-theme='light'] .portal-tab-btn:hover {
+  border-color: rgba(5, 177, 68, 0.2);
+}
+
+.portal-tab-btn-active {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-active) !important;
+  color: var(--text-sec) !important;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.15);
+}
+
+[data-theme='light'] .portal-tab-btn-active {
+  color: var(--border-active) !important;
+  box-shadow: 0 0 15px rgba(5, 177, 68, 0.15);
+}
+
+.portal-tab-indicator {
+  position: absolute;
+  background: linear-gradient(to right, var(--border-active), var(--text-sec));
+}
+

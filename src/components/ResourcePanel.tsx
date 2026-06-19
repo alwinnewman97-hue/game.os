@@ -3,7 +3,7 @@ import { GameState, ResourceType } from '../types';
 import { SEASONS_DATA } from '../gameData';
 import { 
   Leaf, 
-  Trees, 
+  Zap, 
   Gem, 
   Anchor, 
   FlaskConical, 
@@ -47,7 +47,7 @@ export default function ResourcePanel({
   const getResourceIcon = (res: ResourceType) => {
     switch (res) {
       case 'catnip': return <Leaf size={14} className="theme-text-sec" />;
-      case 'wood': return <Trees size={14} className="theme-text-sec" />;
+      case 'wood': return <Zap size={14} className="text-amber-400" />;
       case 'minerals': return <Gem size={14} className="theme-text-sec" />;
       case 'iron': return <Anchor size={14} className="theme-text-sec" />;
       case 'science': return <FlaskConical size={14} className="theme-text-sec" />;
@@ -82,43 +82,46 @@ export default function ResourcePanel({
   };
 
   const resourcesList: { id: ResourceType; label: string; rate: number }[] = [
-    { id: 'catnip', label: 'Catnip', rate: catnipRate },
-    { id: 'wood', label: 'Wood', rate: woodRate },
-    { id: 'minerals', label: 'Minerals', rate: mineralsRate },
-    { id: 'iron', label: 'Iron', rate: ironRate },
-    { id: 'science', label: 'Science', rate: scienceRate },
-    { id: 'culture', label: 'Culture', rate: cultureRate },
+    { id: 'catnip', label: 'Mega Seeds', rate: catnipRate },
+    { id: 'wood', label: 'Plutonium', rate: woodRate },
+    { id: 'minerals', label: 'Crystals', rate: mineralsRate },
+    { id: 'iron', label: 'Neutrium', rate: ironRate },
+    { id: 'science', label: 'Portal Tech', rate: scienceRate },
+    { id: 'culture', label: 'Schwifty Vibes', rate: cultureRate },
   ];
 
   const craftedList: ResourceType[] = ['beam', 'slab', 'plate', 'parchment'];
 
+  const labelMap: Record<string, string> = {
+    beam: 'Nano-Beam',
+    slab: 'Hyper-Slab',
+    plate: 'Neutrium Plate',
+    parchment: 'Portal Formula'
+  };
+
   const curSeason = SEASONS_DATA[store.season.current];
 
   return (
-    <div className="flex flex-col gap-4 theme-bg-panel p-4 w-full h-full overflow-y-auto scrollbar-none">
+    <div className="flex flex-col xl:flex-row gap-6 w-full shrink-0">
       
-      {/* COHESIVE HUD CARD */}
-      <div className="theme-bg-card p-3 rounded-xl border theme-border shadow-sm flex flex-col gap-3">
-        {/* SEASON & DAY OVERVIEW */}
-        <div className="flex items-center justify-between border-b theme-border pb-2.5">
-          <div className="flex items-center gap-1.5">
-            <CloudSun size={15} className="theme-text-sec shrink-0" />
-            <span className="text-xs font-extrabold theme-text-main capitalize">
-              {curSeason.name}
-            </span>
-            <span className="text-[10px] theme-text-muted">
-              (Farmers x{curSeason.catnipModifier.toFixed(1)})
-            </span>
+      {/* LEFT CLUSTER: Controls & Actions */}
+      <div className="flex flex-row items-center xl:items-start gap-4 xl:gap-6 shrink-0 pb-2 xl:pb-0 border-b xl:border-b-0 xl:border-r theme-border border-dashed pr-0 xl:pr-6 overflow-x-auto scrollbar-none">
+        
+        {/* Season & Day Info */}
+        <div className="flex flex-col gap-3 shrink-0 py-1 font-sans">
+          <div className="flex items-center gap-2">
+            <CloudSun size={16} className="theme-text-sec shrink-0 text-cyan-400 animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-xs font-extrabold theme-text-main capitalize leading-none mb-1">
+                {curSeason.name}
+              </span>
+              <span className="text-[10px] theme-text-sec font-mono">
+                Coordinate Day {store.season.daysPassed}/{store.season.totalDays}
+              </span>
+            </div>
           </div>
-          <span className="text-[10px] font-mono font-bold theme-text-sec">
-            Day {store.season.daysPassed}/{store.season.totalDays}
-          </span>
-        </div>
-
-        {/* COMPACT MULTIPLIER AND SINGLE ACTION LINE */}
-        <div className="flex items-center gap-2">
-          {/* MULTISELECT PILLS */}
-          <div className="flex items-center p-0.5 theme-bg-panel rounded-lg border theme-border flex-1">
+          
+          <div className="flex items-center theme-bg-card rounded-lg border theme-border p-0.5 backdrop-blur-md w-max">
             {([1, 5, 25] as const).map((m) => (
               <button
                 key={m}
@@ -126,133 +129,115 @@ export default function ResourcePanel({
                   store.setBuyMultiplier(m);
                   if (store.soundEnabled) playClickSound('click');
                 }}
-                className={`flex-1 py-1 text-[10px] sm:text-xs font-mono font-bold rounded transition-all cursor-pointer text-center ${
+                className={`py-1 px-2.5 text-[10px] font-mono font-bold rounded-md transition-all cursor-pointer ${
                   (store.buyMultiplier || 1) === m
-                    ? 'bg-amber-400 text-neutral-950 font-black shadow-sm'
+                    ? 'theme-text-main bg-white/10 shadow-sm'
                     : 'theme-text-muted hover:theme-text-sec'
                 }`}
               >
-                {m}x
+                {m}X
               </button>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* COMPACT MODERN LABORS */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={handleManualGather}
-          className="theme-accent-bg font-extrabold border theme-border py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-sm select-none"
-        >
-          <Leaf size={12} className="shrink-0" />
-          <span>Gather</span>
-        </button>
+        <div className="w-px h-10 bg-white/5 mx-2 hidden sm:block shrink-0"></div>
 
-        {store.unlocks.wood ? (
+        {/* Manual Actions */}
+        <div className="flex items-stretch gap-2 shrink-0 py-1 h-full font-sans">
           <button
-            onClick={handleManualRefine}
-            disabled={(store.resources.catnip?.amount ?? 0) < 100}
-            className="theme-bg-card hover:theme-hover-bg border theme-border disabled:opacity-30 disabled:cursor-not-allowed py-2 text-[11px] font-bold theme-text-main rounded-lg transition-transform duration-100 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 select-none"
-            title="Refine 100 Catnip into 1 Wood"
+            onClick={handleManualGather}
+            className="theme-bg-card hover:bg-white/5 border theme-border px-4 py-2 rounded-xl flex flex-col items-center justify-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm min-w-[72px]"
           >
-            <Trees size={12} className="shrink-0 text-amber-500" />
-            <span>Refine</span>
+            <Leaf size={14} className="text-emerald-400" />
+            <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">Harvest</span>
           </button>
-        ) : (
-          <div className="theme-bg-card opacity-20 border theme-border py-2 text-[10px] theme-text-muted rounded-lg flex items-center justify-center select-none cursor-not-allowed">
-            Locked
-          </div>
-        )}
+
+          {store.unlocks.wood && (
+            <button
+              onClick={handleManualRefine}
+              disabled={(store.resources.catnip?.amount ?? 0) < 100}
+              className="theme-bg-card hover:bg-white/5 border theme-border px-4 py-2 rounded-xl flex flex-col items-center justify-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed min-w-[72px]"
+              title="Refine 100 Mega Seeds into 1 Plutonium"
+            >
+              <Zap size={14} className="text-amber-400" />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">Refine</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* CORE RESOURCES */}
-      <div className="flex-1">
-        <h3 className="text-[10px] uppercase font-bold tracking-widest theme-text-muted mb-3 ml-1">Core Resources</h3>
-        <div className="space-y-4">
+      {/* RIGHT CLUSTER: The Resource Stream */}
+      <div className="flex-1 flex overflow-x-auto scrollbar-none pb-4 xl:pb-0 -mx-5 px-5 sm:mx-0 sm:px-0">
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-6 w-max font-sans">
+          
           {resourcesList.map((res) => {
             const unlocked = res.id === 'catnip' || store.unlocks[res.id as keyof typeof store.unlocks];
             if (!unlocked) return null;
 
             const cur = store.resources[res.id]?.amount ?? 0;
             const limit = store.resources[res.id]?.max ?? 0;
-            const percent = getPercent(cur, limit);
             const showLimit = limit > 0;
+            const percent = getPercent(cur, limit);
 
             return (
-              <div key={res.id} className="group flex flex-col gap-1 theme-hover-bg p-1.5 rounded transition-colors">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5 font-bold text-xs theme-text-main">
+              <div key={res.id} className="flex flex-col gap-1.5 w-[110px] xl:w-[130px] shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg theme-bg-card border theme-border backdrop-blur-md">
                     {getResourceIcon(res.id)}
-                    <span>{res.label}</span>
                   </div>
-                  <div className="text-[10.5px] theme-text-sec font-bold flex items-center gap-1 font-mono">
-                    <span>{formatNumber(cur)}</span>
-                    {showLimit && (
-                      <>
-                        <span className="theme-text-muted">/</span>
-                        <span className="theme-text-muted">{formatNumber(limit)}</span>
-                      </>
-                    )}
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider theme-text-sec leading-none truncate max-w-[80px]">{res.label}</span>
+                    <span className={getRateColor(res.rate) + " text-[9px] mt-0.5 leading-none font-mono"}>
+                      {res.rate >= 0 ? '+' : ''}{res.rate.toFixed(1)}/s
+                    </span>
                   </div>
                 </div>
-
-                {/* SLIM PROGRESS BAR */}
-                {showLimit && (
-                  <div className="w-full h-[3px] theme-bg-app rounded-full overflow-hidden mt-0.5">
-                    <div 
-                      className={`h-full transition-all duration-300 rounded-full ${
-                        percent >= 100 
-                          ? 'bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.5)]' 
-                          : percent >= 90
-                          ? 'bg-amber-300/80'
-                          : 'theme-accent-bg'
-                      }`}
-                      style={{ width: `${percent}%` }}
-                    />
+                
+                <div className="mt-1">
+                  <div className="flex items-end justify-between font-mono mb-1">
+                    <span className="text-sm xl:text-base font-bold theme-text-main leading-none">{formatNumber(cur)}</span>
+                    {showLimit && <span className="text-[10px] theme-text-muted leading-none">/{formatNumber(limit)}</span>}
                   </div>
-                )}
-
-                {/* PER SEC VALUES & DETAILS */}
-                <div className="flex justify-between items-center text-[9px] theme-text-muted px-0.5">
-                  <span>{showLimit ? `${percent.toFixed(0)}% capacity` : 'No limit'}</span>
-                  <span className={getRateColor(res.rate)}>
-                    {res.rate >= 0 ? '+' : ''}{res.rate.toFixed(2)}/s
-                  </span>
+                  
+                  {showLimit && (
+                    <div className="w-full h-0.5 bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-300 rounded-full ${
+                          percent >= 100 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]' : percent >= 90 ? 'bg-amber-300/80' : 'theme-bg-main bg-neutral-400'
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
+
+          {/* Crafted Goods appended nicely */}
+          {store.unlocks.workshop && craftedList.map((id) => {
+            const unlocked = (store.resources[id]?.amount ?? 0) > 0 || 
+              (id === 'beam' && store.researched.woodworking) || 
+              (id === 'slab' && store.researched.mining) || 
+              (id === 'plate' && store.researched.metalworking) || 
+              (id === 'parchment' && store.researched.writing);
+
+            if (!unlocked) return null;
+            const cur = store.resources[id]?.amount ?? 0;
+
+            return (
+              <div key={id} className="flex flex-col justify-between py-1 px-3 border-l border-dashed theme-border h-full shrink-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-2 mt-0.5">{labelMap[id] || id}</span>
+                <span className="text-sm xl:text-base font-bold theme-text-main font-mono leading-none mt-auto mb-1">
+                   {formatNumber(cur)}
+                </span>
+              </div>
+            );
+          })}
+
         </div>
-
-        {/* CRAFTED GOODS */}
-        {store.unlocks.workshop && (
-          <div className="mt-6 pt-5 border-t theme-border">
-            <h3 className="text-[10px] uppercase font-bold tracking-widest theme-text-muted mb-3 ml-1">Refined Artifacts</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {craftedList.map((id) => {
-                const unlocked = (store.resources[id]?.amount ?? 0) > 0 || 
-                  (id === 'beam' && store.researched.woodworking) || 
-                  (id === 'slab' && store.researched.mining) || 
-                  (id === 'plate' && store.researched.metalworking) || 
-                  (id === 'parchment' && store.researched.writing);
-
-                if (!unlocked) return null;
-
-                const cur = store.resources[id]?.amount ?? 0;
-
-                return (
-                  <div key={id} className="theme-bg-card border theme-border p-2 rounded-lg flex flex-col justify-between hover:theme-border-active transition-colors">
-                    <span className="text-[10px] theme-text-muted capitalize">{id}</span>
-                    <span className="text-xs font-bold theme-text-main font-mono mt-1">{formatNumber(cur)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
-
     </div>
   );
 }
