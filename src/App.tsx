@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useGameStore, calculateJobStrengths } from './store/useGameStore';
-import { BUILDINGS, JOBS, SEASONS_DATA } from './gameData';
-import { 
-  Flame, 
-  HelpCircle, 
-  Settings2, 
-  Sparkle, 
-  Users, 
-  FlaskConical, 
-  Hammer, 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
+import React, { useEffect, useState } from "react";
+import { useGameStore, calculateJobStrengths } from "./store/useGameStore";
+import { BUILDINGS, JOBS, DIMENSIONS_DATA } from "./gameData";
+import {
+  Flame,
+  HelpCircle,
+  Settings2,
+  Sparkle,
+  Users,
+  FlaskConical,
+  Hammer,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
   Sparkles,
   Award,
   ChevronRight,
@@ -27,36 +27,40 @@ import {
   Trash2,
   ShieldAlert,
   Hand,
-  Zap
-} from 'lucide-react';
+  Zap,
+  Calendar,
+} from "lucide-react";
 
-import ResourcePanel from './components/ResourcePanel';
-import BonfireTab from './components/BonfireTab';
-import TownTab from './components/TownTab';
-import ScienceTab from './components/ScienceTab';
-import WorkshopTab from './components/WorkshopTab';
-import AchievementsTab from './components/AchievementsTab';
-import SettingsTab from './components/SettingsTab';
-import { playClickSound } from './utils/audio';
-import { AnimatePresence, motion } from 'motion/react';
-import SplashStartup from './components/SplashStartup';
+import ResourcePanel from "./components/ResourcePanel";
+import BonfireTab from "./components/BonfireTab";
+import TownTab from "./components/TownTab";
+import ScienceTab from "./components/ScienceTab";
+import UpgradesTab from "./components/UpgradesTab";
+import AchievementsTab from "./components/AchievementsTab";
+import SettingsTab from "./components/SettingsTab";
+import { playClickSound } from "./utils/audio";
+import { AnimatePresence, motion } from "motion/react";
+import SplashStartup from "./components/SplashStartup";
 
-type ActiveTabType = 'bonfire' | 'town' | 'science' | 'workshop' | 'achievements' | 'settings';
+type ActiveTabType =
+  "bonfire" | "town" | "science" | "upgrades" | "achievements" | "settings";
 
 export default function App() {
   const store = useGameStore();
-  const [activeTab, setActiveTab] = useState<ActiveTabType>('bonfire');
+  const [activeTab, setActiveTab] = useState<ActiveTabType>("bonfire");
   const [showSpeedControls, setShowSpeedControls] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [offlineProgressMsg, setOfflineProgressMsg] = useState<string | null>(null);
+  const [offlineProgressMsg, setOfflineProgressMsg] = useState<string | null>(
+    null,
+  );
   const [showSplash, setShowSplash] = useState(true);
-  
+
   // Custom layout view togglers to manage display density - collapsed on small mobile screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
 
   // Synchronize document attribute with theme selection
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', store.theme);
+    document.documentElement.setAttribute("data-theme", store.theme);
   }, [store.theme]);
 
   // Initialize Game loop
@@ -67,10 +71,10 @@ export default function App() {
     const loop = () => {
       const now = Date.now();
       const deltaSeconds = (now - lastTime) / 1000;
-      
+
       // Advance game store, capping maximum single-frame lag to 2 seconds
       store.tick(Math.min(2, deltaSeconds));
-      
+
       lastTime = now;
       animationFrameId = requestAnimationFrame(loop);
     };
@@ -80,7 +84,7 @@ export default function App() {
     // Initial offline catchup calculation
     const now = Date.now();
     const offlineSeconds = (now - store.lastTick) / 1000;
-    
+
     if (offlineSeconds > 25) {
       // Calculate how many minutes offline
       const mins = Math.floor(offlineSeconds / 60);
@@ -89,12 +93,12 @@ export default function App() {
       if (hours > 0) {
         timeStr = `${hours}h ${mins % 60}m`;
       }
-      
+
       // Let's pass the offline seconds to the tick
       store.tick(offlineSeconds);
-      
+
       setOfflineProgressMsg(
-        `Welcome Back, Portal Master! While you were offline for ${timeStr}, your clones maintained the laboratories, harvested fresh Mega Seeds, and kept the fusion cores warm.`
+        `Welcome Back, Portal Master! While you were offline for ${timeStr}, your clones maintained the laboratories, harvested fresh Mega Seeds, and kept the fusion cores warm.`,
       );
     }
 
@@ -109,19 +113,21 @@ export default function App() {
   }, []);
 
   // Compute calculated Rates per second for display
-  const kittensList = Array.isArray(store.village?.kittens) ? store.village.kittens : [];
+  const kittensList = Array.isArray(store.village?.kittens)
+    ? store.village.kittens
+    : [];
   const kittenCount = kittensList.length;
-  
+
   const jobCounts = {
     farmer: 0,
     woodcutter: 0,
     scholar: 0,
     miner: 0,
-    priest: 0
+    priest: 0,
   };
-  
-  kittensList.forEach(k => {
-    if (k.job !== 'unemployed') {
+
+  kittensList.forEach((k) => {
+    if (k.job !== "unemployed") {
       jobCounts[k.job]++;
     }
   });
@@ -131,51 +137,76 @@ export default function App() {
   const barnMultiplier = store.upgrades.reinforcedBarns ? 1.4 : 1.0;
   const warehouseMultiplier = store.upgrades.expandedStorage ? 1.35 : 1.0;
 
-  let maxCatnip = 2000 + (store.buildings.pasture * 500) + (store.buildings.barn * 2500 * barnMultiplier);
+  let maxCatnip =
+    2000 +
+    store.buildings.pasture * 500 +
+    store.buildings.barn * 2500 * barnMultiplier;
   if (store.upgrades.catnipSilos) maxCatnip *= 1.5;
 
-  const totalBoost = (store.activeCertificates || []).reduce((acc, cert) => acc + cert.boostPercent, 0);
+  const totalBoost = (store.activeCertificates || []).reduce(
+    (acc, cert) => acc + cert.boostPercent,
+    0,
+  );
   const certificateMultiplier = 1 + totalBoost;
-  const portalFluxMultiplier = 1 + (store.portalFlux * 0.1);
+  const portalFluxMultiplier = 1 + store.portalFlux * 0.1;
   const dimAmplifierLevel = store.portalUpgrades?.dimensionalAmplifier ?? 0;
-  const dimensionalMultiplier = 1 + (dimAmplifierLevel * 0.15);
-  let productionMultiplier = certificateMultiplier * portalFluxMultiplier * dimensionalMultiplier;
+  const dimensionalMultiplier = 1 + dimAmplifierLevel * 0.15;
+  let productionMultiplier =
+    certificateMultiplier * portalFluxMultiplier * dimensionalMultiplier;
 
   if (store.insaneMode) {
     productionMultiplier *= 0.65;
   }
-  if (store.activeAnomaly?.type === 'fed_raid') {
-    productionMultiplier *= 0.50;
+  if (store.activeAnomaly?.type === "fed_raid") {
+    productionMultiplier *= 0.5;
   }
 
   // Rates formulas mirror store tick perfectly for pixel-perfect UI synchronization
-  const farmerEffBonus = store.researched.agriculture ? 1.20 : 1.0;
+  const farmerEffBonus = store.researched.agriculture ? 1.2 : 1.0;
   const agricultureGreenhouseBonus = store.researched.agriculture ? 1.25 : 1.0;
-  let seasonModifier = store.researched.calendar ? SEASONS_DATA[store.season.current].catnipModifier : 1.0;
-  
-  if (store.insaneMode && store.season.current === 'Winter') {
-    seasonModifier = store.upgrades.portalHeaters ? 0.35 : 0.05;
-  } else if (store.upgrades.portalHeaters && store.season.current === 'Winter') {
-    seasonModifier = Math.max(seasonModifier, 0.55);
-  }
-  
-  const aqueductBoost = 1 + (store.buildings.aqueduct * 0.15);
+  let dimensionModifier = store.researched.calendar
+    ? DIMENSIONS_DATA[store.currentDimension].catnipModifier
+    : 1.0;
 
-  const fieldsPassiveRate = store.buildings.catnipField * 0.63 * seasonModifier * aqueductBoost * agricultureGreenhouseBonus;
-  const farmerRateValue = jobStrengths.farmer * 5.0 * farmerEffBonus * seasonModifier * productionMultiplier;
-  
-  const pastureIntakeReduction = Math.max(0.50, 1 - (store.buildings.pasture * 0.015));
-  const baseFoodDemandPerMorty = store.insaneMode ? 5.50 : 4.25;
+  if (store.insaneMode && store.currentDimension === "Froopyland") {
+    dimensionModifier = store.upgrades.portalHeaters ? 0.35 : 0.05;
+  } else if (
+    store.upgrades.portalHeaters &&
+    store.currentDimension === "Froopyland"
+  ) {
+    dimensionModifier = Math.max(dimensionModifier, 0.55);
+  }
+
+  const aqueductBoost = 1 + store.buildings.aqueduct * 0.15;
+
+  const fieldsPassiveRate =
+    store.buildings.catnipField *
+    0.63 *
+    dimensionModifier *
+    aqueductBoost *
+    agricultureGreenhouseBonus;
+  const farmerRateValue =
+    jobStrengths.farmer *
+    5.0 *
+    farmerEffBonus *
+    dimensionModifier *
+    productionMultiplier;
+
+  const pastureIntakeReduction = Math.max(
+    0.5,
+    1 - store.buildings.pasture * 0.015,
+  );
+  const baseFoodDemandPerMorty = store.insaneMode ? 5.5 : 4.25;
   let totalFoodDemand = 0;
-  kittensList.forEach(k => {
+  kittensList.forEach((k) => {
     let multiplier = 1.0;
-    if (k.trait && k.trait.includes('Mega-Seed Tolerant')) {
+    if (k.trait && k.trait.includes("Mega-Seed Tolerant")) {
       multiplier = 0.95;
     }
     totalFoodDemand += baseFoodDemandPerMorty * multiplier;
   });
   const kittenEatsRate = totalFoodDemand * pastureIntakeReduction;
-  
+
   let computedCatnipRate = fieldsPassiveRate + farmerRateValue - kittenEatsRate;
 
   let axeMultiplier = 1.0;
@@ -183,48 +214,103 @@ export default function App() {
   else if (store.upgrades.mineralAxes) axeMultiplier = 1.25;
 
   const efficiencyFactor = store.village.happiness / 100;
-  
-  const woodworkingWoodcutterBonus = store.researched.woodworking ? 1.15 : 1.0;
-  let computedWoodRate = jobStrengths.woodcutter * 0.10 * axeMultiplier * efficiencyFactor * productionMultiplier * woodworkingWoodcutterBonus;
 
-  const miningMinerBonus = store.researched.mining ? 1.20 : 1.0;
-  let computedMineralsRate = (jobStrengths.miner * 0.18 * efficiencyFactor * productionMultiplier * miningMinerBonus) + (store.buildings.mine * 0.05 * miningMinerBonus);
+  const woodworkingWoodcutterBonus = store.researched.woodworking ? 1.15 : 1.0;
+  let computedWoodRate =
+    jobStrengths.woodcutter *
+    0.1 *
+    axeMultiplier *
+    efficiencyFactor *
+    productionMultiplier *
+    woodworkingWoodcutterBonus;
+
+  const miningMinerBonus = store.researched.mining ? 1.2 : 1.0;
+  let computedMineralsRate =
+    jobStrengths.miner *
+      0.18 *
+      efficiencyFactor *
+      productionMultiplier *
+      miningMinerBonus +
+    store.buildings.mine * 0.05 * miningMinerBonus;
   let computedIronRate = 0;
 
-  const metalworkingSmelterBonus = store.researched.metalworking ? 1.30 : 1.0;
+  const metalworkingSmelterBonus = store.researched.metalworking ? 1.3 : 1.0;
   if (store.buildings.smelter > 0) {
     const smeltersCount = store.buildings.smelter;
     // Smelters consume raw mats to output iron
-    if ((store.resources.wood?.amount ?? 0) > 1 && (store.resources.minerals?.amount ?? 0) > 10) {
+    if (
+      (store.resources.wood?.amount ?? 0) > 1 &&
+      (store.resources.minerals?.amount ?? 0) > 10
+    ) {
       computedWoodRate -= smeltersCount * 1.0;
       computedMineralsRate -= smeltersCount * 10.0;
-      computedIronRate += smeltersCount * 0.18 * metalworkingSmelterBonus * productionMultiplier;
+      computedIronRate +=
+        smeltersCount * 0.18 * metalworkingSmelterBonus * productionMultiplier;
     }
   }
 
   // Deduct active drains from the rendering HUD rates
-  if (store.activeAnomaly?.type === 'fluid_leak') {
+  if (store.activeAnomaly?.type === "fluid_leak") {
     computedCatnipRate -= 8.0;
     computedWoodRate -= 1.2;
   }
 
-  const academyScholarMod = 1 + (store.buildings.academy * 0.20);
+  const academyScholarMod = 1 + store.buildings.academy * 0.2;
   const writingScholarBonus = store.researched.writing ? 1.25 : 1.0;
-  
+
   const quantumResonatorLevel = store.portalUpgrades?.quantumResonator ?? 0;
-  const scholarResonatorMultiplier = 1 + (quantumResonatorLevel * 0.25);
-  let computedScienceRate = jobStrengths.scholar * 0.25 * academyScholarMod * efficiencyFactor * productionMultiplier * writingScholarBonus * scholarResonatorMultiplier;
+  const scholarResonatorMultiplier = 1 + quantumResonatorLevel * 0.25;
+  let computedScienceRate =
+    jobStrengths.scholar *
+    0.25 *
+    academyScholarMod *
+    efficiencyFactor *
+    productionMultiplier *
+    writingScholarBonus *
+    scholarResonatorMultiplier;
 
-  const theologyPriestBonus = store.researched.theology ? 1.40 : 1.0;
-  let computedCultureRate = jobStrengths.priest * 0.15 * efficiencyFactor * productionMultiplier * theologyPriestBonus;
+  const theologyPriestBonus = store.researched.theology ? 1.4 : 1.0;
+  let computedCultureRate =
+    jobStrengths.priest *
+    0.15 *
+    efficiencyFactor *
+    productionMultiplier *
+    theologyPriestBonus;
 
-  if (store.activeAnomaly?.type === 'cromulon') {
+  if (store.activeAnomaly?.type === "cromulon") {
     computedCultureRate -= 4.0;
+  }
+
+  // DARK MATTER and PORTAL FLUID
+  const darkMatterScientistRate =
+    (jobStrengths.darkMatterScientist || 0) *
+    0.05 *
+    efficiencyFactor *
+    productionMultiplier;
+  const darkMatterExtractorRate = store.buildings.darkMatterExtractor * 0.15;
+  let computedDarkMatterRate =
+    darkMatterScientistRate + darkMatterExtractorRate;
+
+  let computedPortalFluidRate =
+    (jobStrengths.fluidEngineer || 0) *
+    0.02 *
+    efficiencyFactor *
+    productionMultiplier;
+  if (store.buildings.portalGenerator > 0) {
+    const pgCount = store.buildings.portalGenerator;
+    if (
+      (store.resources.darkMatter?.amount ?? 0) > 5 * pgCount &&
+      (store.resources.minerals?.amount ?? 0) > 10 * pgCount
+    ) {
+      computedDarkMatterRate -= pgCount * 5.0;
+      computedMineralsRate -= pgCount * 10.0;
+      computedPortalFluidRate += pgCount * 0.08 * productionMultiplier;
+    }
   }
 
   // Apply chronal acceleration multiplier to all rendering rates
   const chronalDilatorLevel = store.portalUpgrades?.chronalDilator ?? 0;
-  const chronalMultiplier = 1 + (chronalDilatorLevel * 0.10);
+  const chronalMultiplier = 1 + chronalDilatorLevel * 0.1;
 
   computedCatnipRate *= chronalMultiplier;
   computedWoodRate *= chronalMultiplier;
@@ -232,25 +318,27 @@ export default function App() {
   computedIronRate *= chronalMultiplier;
   computedScienceRate *= chronalMultiplier;
   computedCultureRate *= chronalMultiplier;
+  computedDarkMatterRate *= chronalMultiplier;
+  computedPortalFluidRate *= chronalMultiplier;
 
   const handleTabChange = (tab: ActiveTabType) => {
     setActiveTab(tab);
-    if (store.soundEnabled) playClickSound('click');
+    if (store.soundEnabled) playClickSound("click");
   };
 
   const currentTabComponent = () => {
     switch (activeTab) {
-      case 'bonfire':
+      case "bonfire":
         return <BonfireTab store={store} />;
-      case 'town':
+      case "town":
         return <TownTab store={store} />;
-      case 'science':
+      case "science":
         return <ScienceTab store={store} />;
-      case 'workshop':
-        return <WorkshopTab store={store} />;
-      case 'achievements':
+      case "upgrades":
+        return <UpgradesTab store={store} />;
+      case "achievements":
         return <AchievementsTab store={store} />;
-      case 'settings':
+      case "settings":
         return <SettingsTab store={store} />;
       default:
         return <BonfireTab store={store} />;
@@ -259,7 +347,6 @@ export default function App() {
 
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] overflow-hidden theme-bg-app theme-text-main antialiased font-sans max-w-full relative selection:theme-bg-hover selection:theme-text-main">
-      
       {/* CINEMATIC STARTUP SPLASH SCREEN WITH INTERACTIVE IMMERSIVE LAUNCHER */}
       <AnimatePresence mode="wait">
         {showSplash && (
@@ -267,12 +354,12 @@ export default function App() {
             key="splash-screen-wrapper"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
             className="fixed inset-0 z-[100] overflow-hidden"
           >
-            <SplashStartup 
-              onEnter={() => setShowSplash(false)} 
-              soundEnabled={store.soundEnabled} 
+            <SplashStartup
+              onEnter={() => setShowSplash(false)}
+              soundEnabled={store.soundEnabled}
             />
           </motion.div>
         )}
@@ -282,7 +369,9 @@ export default function App() {
       {showSuccessToast && (
         <div className="fixed top-6 right-6 z-[90] theme-bg-card border theme-border p-3 h-14 rounded-2xl flex items-center gap-3 shadow-2xl backdrop-blur-md animate-fade-in text-xs">
           <Sparkles size={16} className="theme-text-main" />
-          <span className="font-semibold tracking-wide">Persistence established. Progress saved offline.</span>
+          <span className="font-semibold tracking-wide">
+            Persistence established. Progress saved offline.
+          </span>
         </div>
       )}
 
@@ -294,11 +383,13 @@ export default function App() {
               <Award size={24} />
               <span>Chronoscopy</span>
             </h3>
-            <p className="text-sm theme-text-sec leading-relaxed font-sans">{offlineProgressMsg}</p>
+            <p className="text-sm theme-text-sec leading-relaxed font-sans">
+              {offlineProgressMsg}
+            </p>
             <button
               onClick={() => {
                 setOfflineProgressMsg(null);
-                if (store.soundEnabled) playClickSound('success');
+                if (store.soundEnabled) playClickSound("success");
               }}
               className="theme-text-main border theme-border py-4 rounded-xl mt-4 cursor-pointer hover:theme-bg-hover font-bold uppercase tracking-widest text-xs transition-all active:scale-[0.98]"
             >
@@ -310,41 +401,58 @@ export default function App() {
 
       {/* AWWWARDS-STYLE SIDE NAVIGATION DOCK */}
       <nav className="fixed md:static bottom-2 left-2 right-2 md:inset-y-0 md:left-0 z-50 md:w-28 md:h-screen theme-bg-app md:bg-transparent backdrop-blur-3xl md:backdrop-blur-none border theme-border md:border-none md:border-r theme-border rounded-[1.5rem] md:rounded-none flex flex-row md:flex-col items-center justify-between p-1.5 md:py-8 shadow-2xl md:shadow-none shrink-0">
-        
         {/* Top items: Logo and Primary Tabs */}
         <div className="flex flex-row md:flex-col items-center gap-1 md:gap-6 w-full">
           <div className="hidden md:flex items-center justify-center w-14 h-14 rounded-2xl theme-bg-card border theme-border mb-4 shadow-[0_0_30px_rgba(255,255,255,0.03)] opacity-80 hover:opacity-100 transition-opacity">
-            <Flame size={24} className="theme-text-main"/>
+            <Flame size={24} className="theme-text-main" />
           </div>
 
           <div className="flex flex-row md:flex-col gap-1 md:gap-1.5 w-full justify-around md:justify-start px-1 md:px-4">
             <button
-              onClick={() => handleTabChange('bonfire')}
+              onClick={() => handleTabChange("bonfire")}
               className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                activeTab === 'bonfire' 
-                  ? 'portal-tab-btn-active scale-100' 
-                  : 'theme-text-muted scale-95'
+                activeTab === "bonfire"
+                  ? "portal-tab-btn-active scale-100"
+                  : "theme-text-muted scale-95"
               }`}
             >
-              <Sparkle size={18} className={activeTab === 'bonfire' ? 'text-emerald-400 animate-pulse' : 'theme-text-muted'} />
-              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">Citadel</span>
-              {activeTab === 'bonfire' && (
+              <Sparkle
+                size={18}
+                className={
+                  activeTab === "bonfire"
+                    ? "text-emerald-400 animate-pulse"
+                    : "theme-text-muted"
+                }
+              />
+              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                Citadel
+              </span>
+              {activeTab === "bonfire" && (
                 <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
               )}
             </button>
 
             {store.unlocks.village && (
               <button
-                onClick={() => handleTabChange('town')}
+                onClick={() => handleTabChange("town")}
                 className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                  activeTab === 'town' 
-                    ? 'portal-tab-btn-active scale-100' 
-                    : 'theme-text-muted scale-95'
+                  activeTab === "town"
+                    ? "portal-tab-btn-active scale-100"
+                    : "theme-text-muted scale-95"
                 }`}
               >
-                <Users size={18} className={activeTab === 'town' ? 'text-emerald-400 animate-pulse' : 'theme-text-muted'} />
-                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">Clone Bay</span>
-                {activeTab === 'town' && (
+                <Users
+                  size={18}
+                  className={
+                    activeTab === "town"
+                      ? "text-emerald-400 animate-pulse"
+                      : "theme-text-muted"
+                  }
+                />
+                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                  Clone Bay
+                </span>
+                {activeTab === "town" && (
                   <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
                 )}
               </button>
@@ -352,64 +460,100 @@ export default function App() {
 
             {store.unlocks.science && (
               <button
-                onClick={() => handleTabChange('science')}
+                onClick={() => handleTabChange("science")}
                 className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                  activeTab === 'science' 
-                    ? 'portal-tab-btn-active scale-100' 
-                    : 'theme-text-muted scale-95'
+                  activeTab === "science"
+                    ? "portal-tab-btn-active scale-100"
+                    : "theme-text-muted scale-95"
                 }`}
               >
-                <FlaskConical size={18} className={activeTab === 'science' ? 'text-emerald-400 animate-pulse' : 'theme-text-muted'} />
-                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">Labs</span>
-                {activeTab === 'science' && (
+                <FlaskConical
+                  size={18}
+                  className={
+                    activeTab === "science"
+                      ? "text-emerald-400 animate-pulse"
+                      : "theme-text-muted"
+                  }
+                />
+                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                  Labs
+                </span>
+                {activeTab === "science" && (
                   <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
                 )}
               </button>
             )}
 
-             {store.unlocks.workshop && (
+            {store.unlocks.workshop && (
               <button
-                onClick={() => handleTabChange('workshop')}
+                onClick={() => handleTabChange("upgrades")}
                 className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                  activeTab === 'workshop' 
-                    ? 'portal-tab-btn-active scale-100' 
-                    : 'theme-text-muted scale-95'
+                  activeTab === "upgrades"
+                    ? "portal-tab-btn-active scale-100"
+                    : "theme-text-muted scale-95"
                 }`}
               >
-                <Hammer size={18} className={activeTab === 'workshop' ? 'text-emerald-400 animate-pulse' : 'theme-text-muted'} />
-                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">Refine</span>
-                {activeTab === 'workshop' && (
+                <Hammer
+                  size={18}
+                  className={
+                    activeTab === "upgrades"
+                      ? "text-emerald-400 animate-pulse"
+                      : "theme-text-muted"
+                  }
+                />
+                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                  Upgrades
+                </span>
+                {activeTab === "upgrades" && (
                   <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
                 )}
               </button>
             )}
 
             <button
-              onClick={() => handleTabChange('achievements')}
+              onClick={() => handleTabChange("achievements")}
               className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                activeTab === 'achievements' 
-                  ? 'portal-tab-btn-active scale-100' 
-                  : 'text-[#39ff14]/90 scale-95'
+                activeTab === "achievements"
+                  ? "portal-tab-btn-active scale-100"
+                  : "text-[#39ff14]/90 scale-95"
               }`}
             >
-              <Award size={18} className={activeTab === 'achievements' ? 'text-[#39ff14] animate-pulse' : 'theme-text-muted'} />
-              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">Badges</span>
-              {activeTab === 'achievements' && (
+              <Award
+                size={18}
+                className={
+                  activeTab === "achievements"
+                    ? "text-[#39ff14] animate-pulse"
+                    : "theme-text-muted"
+                }
+              />
+              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                Badges
+              </span>
+              {activeTab === "achievements" && (
                 <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full font-sans text-[#39ff14]/90" />
               )}
             </button>
 
             <button
-              onClick={() => handleTabChange('settings')}
+              onClick={() => handleTabChange("settings")}
               className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                activeTab === 'settings' 
-                  ? 'portal-tab-btn-active scale-100' 
-                  : 'theme-text-muted scale-95'
+                activeTab === "settings"
+                  ? "portal-tab-btn-active scale-100"
+                  : "theme-text-muted scale-95"
               }`}
             >
-              <Settings2 size={18} className={activeTab === 'settings' ? 'text-emerald-400 animate-pulse' : 'theme-text-muted'} />
-              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">Settings</span>
-              {activeTab === 'settings' && (
+              <Settings2
+                size={18}
+                className={
+                  activeTab === "settings"
+                    ? "text-emerald-400 animate-pulse"
+                    : "theme-text-muted"
+                }
+              />
+              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                Settings
+              </span>
+              {activeTab === "settings" && (
                 <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
               )}
             </button>
@@ -421,7 +565,7 @@ export default function App() {
           <button
             onClick={() => {
               store.toggleSound();
-              if (!store.soundEnabled) playClickSound('success');
+              if (!store.soundEnabled) playClickSound("success");
             }}
             className="p-2.5 rounded-xl theme-text-muted hover:theme-text-sec transition-colors hidden sm:block"
           >
@@ -432,75 +576,103 @@ export default function App() {
 
       {/* MAIN WORKSPACE AREA */}
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-        
         {/* SUPER MINIMAL TOP BAR */}
-        <header className={`w-full shrink-0 transition-all duration-300 z-20 relative flex flex-col ${
-          store.density === 'compact' 
-            ? 'pt-3 sm:pt-4 px-4 sm:px-6 gap-2.5' 
-            : 'pt-8 sm:pt-10 px-5 sm:px-10 gap-6'
-        }`}>
+        <header
+          className={`w-full shrink-0 transition-all duration-300 z-20 relative flex flex-col ${
+            store.density === "compact"
+              ? "pt-3 sm:pt-4 px-4 sm:px-6 gap-2.5"
+              : "pt-8 sm:pt-10 px-5 sm:px-10 gap-6"
+          }`}
+        >
           <div className="flex justify-between items-end relative">
-             <h1 className={`font-black tracking-[-0.04em] opacity-5 theme-text-main uppercase leading-none select-none absolute -top-4 -left-2 pointer-events-none origin-left transform-gpu mix-blend-overlay transition-all duration-300 ${
-               store.density === 'compact' ? 'text-3xl sm:text-4xl' : 'text-5xl sm:text-7xl'
-             }`}>
-               {activeTab === 'bonfire' ? 'Citadel' : activeTab === 'town' ? 'Clone Bay' : activeTab === 'science' ? 'Labs' : activeTab === 'workshop' ? 'Refinery' : 'Badges'}
-             </h1>
-             
-             {/* Spacing element to push controls to the right */}
-             <div className="flex-1"></div>
+            <h1
+              className={`font-black tracking-[-0.04em] opacity-5 theme-text-main uppercase leading-none select-none absolute -top-4 -left-2 pointer-events-none origin-left transform-gpu mix-blend-overlay transition-all duration-300 ${
+                store.density === "compact"
+                  ? "text-3xl sm:text-4xl"
+                  : "text-5xl sm:text-7xl"
+              }`}
+            >
+              {activeTab === "bonfire"
+                ? "Citadel"
+                : activeTab === "town"
+                  ? "Clone Bay"
+                  : activeTab === "science"
+                    ? "Labs"
+                    : activeTab === "upgrades"
+                      ? "Upgrades"
+                      : "Badges"}
+            </h1>
 
-             <div className="flex items-center gap-4 z-10">
-                <button
-                  onClick={() => {
-                    const nextTheme = store.theme === 'dark' || store.theme === 'trevor' ? 'light' : 'dark';
-                    store.setTheme(nextTheme);
-                    if (store.soundEnabled) playClickSound('click');
-                  }}
-                  className="p-2.5 rounded-xl theme-bg-card border theme-border theme-text-sec hover:theme-text-main transition-colors shadow-sm"
-                >
-                  {(store.theme === 'dark' || store.theme === 'trevor') ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
+            {/* Spacing element to push controls to the right */}
+            <div className="flex-1"></div>
 
-                <div className="flex items-center theme-bg-card border theme-border rounded-xl p-1 gap-1 shadow-sm backdrop-blur-md">
-                  <button
-                    onClick={() => { store.setGameSpeed(0); if (store.soundEnabled) playClickSound('click'); }}
-                    className={`p-2 rounded-lg cursor-pointer transition-all ${store.gameSpeed === 0 ? 'theme-bg-hover theme-text-main' : 'theme-text-muted hover:theme-text-sec'}`}
-                  >
-                    <Pause size={14} />
-                  </button>
-                  <button
-                    onClick={() => { store.setGameSpeed(1); if (store.soundEnabled) playClickSound('click'); }}
-                    className={`px-3 py-1.5 text-xs rounded-lg font-black cursor-pointer transition-all ${store.gameSpeed === 1 ? 'theme-bg-hover theme-text-main shadow-sm' : 'theme-text-muted hover:theme-text-sec'}`}
-                  >
-                    1X
-                  </button>
-                </div>
-             </div>
+            <div className="flex items-center gap-4 z-10">
+              <button
+                onClick={() => {
+                  const nextTheme =
+                    store.theme === "dark" || store.theme === "trevor"
+                      ? "light"
+                      : "dark";
+                  store.setTheme(nextTheme);
+                  if (store.soundEnabled) playClickSound("click");
+                }}
+                className="p-2.5 rounded-xl theme-bg-card border theme-border theme-text-sec hover:theme-text-main transition-colors shadow-sm"
+              >
+                {store.theme === "dark" || store.theme === "trevor" ? (
+                  <Sun size={18} />
+                ) : (
+                  <Moon size={18} />
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  const nextSpeed = store.gameSpeed === 0 ? 1 : 0;
+                  store.setGameSpeed(nextSpeed);
+                  if (store.soundEnabled) playClickSound("click");
+                }}
+                className={`p-2.5 rounded-xl theme-bg-card border theme-border transition-all shadow-sm flex items-center gap-1.5 cursor-pointer ${
+                  store.gameSpeed === 0
+                    ? "text-amber-500 border-amber-500/30 bg-amber-500/5 animate-pulse"
+                    : "theme-text-sec hover:theme-text-main"
+                }`}
+                title={store.gameSpeed === 0 ? "Resume Game" : "Pause Game"}
+              >
+                {store.gameSpeed === 0 ? <Play size={15} /> : <Pause size={15} />}
+                <span className="text-[11px] font-black font-sans uppercase tracking-wider">
+                  {store.gameSpeed === 0 ? "Paused" : "Pause"}
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* FLOATING TOP RESOURCES HUD */}
           <div className="z-20 w-full animate-fade-in relative mt-2 mb-2">
-             <ResourcePanel
-                store={store}
-                catnipRate={computedCatnipRate}
-                woodRate={computedWoodRate}
-                scienceRate={computedScienceRate}
-                mineralsRate={computedMineralsRate}
-                cultureRate={computedCultureRate}
-                ironRate={computedIronRate}
-              />
+            <ResourcePanel
+              store={store}
+              catnipRate={computedCatnipRate}
+              woodRate={computedWoodRate}
+              scienceRate={computedScienceRate}
+              mineralsRate={computedMineralsRate}
+              cultureRate={computedCultureRate}
+              ironRate={computedIronRate}
+              darkMatterRate={computedDarkMatterRate}
+              portalFluidRate={computedPortalFluidRate}
+            />
           </div>
 
           {/* ANOMALY ALERT SYSTEM */}
           {store.activeAnomaly && (
             <div className="z-20 w-full animate-bounce theme-bg-card border-2 border-red-500/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_20px_rgba(239,68,68,0.25)] backdrop-blur-md mb-2 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-red-950/30">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 transition-all duration-300"
-                  style={{ width: `${(store.activeAnomaly.durationLeft / 20) * 100}%` }}
+                  style={{
+                    width: `${(store.activeAnomaly.durationLeft / 20) * 100}%`,
+                  }}
                 />
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-500 shrink-0 select-none animate-pulse">
                   <ShieldAlert size={26} />
@@ -528,17 +700,21 @@ export default function App() {
                 <button
                   onClick={() => {
                     store.defuseAnomalyClick();
-                    if (store.soundEnabled) playClickSound('click');
+                    if (store.soundEnabled) playClickSound("click");
                   }}
                   className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 theme-text-main font-black text-xs uppercase tracking-wider px-4 py-3 rounded-xl shadow-lg border border-red-400 transition-all cursor-pointer group"
                 >
-                  <Hand size={14} className="group-hover:scale-125 transition-transform" />
-                  Stabilize ({store.activeAnomaly.clicksMade}/{store.activeAnomaly.clicksRequired})
+                  <Hand
+                    size={14}
+                    className="group-hover:scale-125 transition-transform"
+                  />
+                  Stabilize ({store.activeAnomaly.clicksMade}/
+                  {store.activeAnomaly.clicksRequired})
                 </button>
                 <button
                   onClick={() => {
                     store.defuseAnomalyInstant();
-                    if (store.soundEnabled) playClickSound('success');
+                    if (store.soundEnabled) playClickSound("success");
                   }}
                   disabled={(store.resources.wood?.amount ?? 0) < 40}
                   className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 theme-bg-card hover:bg-neutral-800 disabled:opacity-40 disabled:hover:theme-bg-card border theme-border hover:border-neutral-500 theme-text-main text-xs font-black uppercase tracking-wider px-4 py-3 rounded-xl transition-all cursor-pointer"
@@ -552,14 +728,13 @@ export default function App() {
         </header>
 
         {/* ACTIVE TAB CONTENT WINDOW */}
-        <div className={`flex-1 overflow-x-hidden overflow-y-auto pb-32 md:pb-12 pt-1.5 relative z-10 scrollbar-none transition-all duration-300 ${
-          store.density === 'compact' ? 'px-4 sm:px-6' : 'px-5 sm:px-10'
-        }`}>
+        <div
+          className={`flex-1 overflow-x-hidden overflow-y-auto pb-32 md:pb-12 pt-1.5 relative z-10 scrollbar-none transition-all duration-300 ${
+            store.density === "compact" ? "px-4 sm:px-6" : "px-5 sm:px-10"
+          }`}
+        >
           {currentTabComponent()}
         </div>
-
-
-
       </main>
     </div>
   );

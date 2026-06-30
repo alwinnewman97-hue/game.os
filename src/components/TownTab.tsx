@@ -28,6 +28,8 @@ export default function TownTab({ store }: TownTabProps) {
     scholar: 0,
     miner: 0,
     priest: 0,
+    darkMatterScientist: 0,
+    fluidEngineer: 0,
     unemployed: 0
   };
 
@@ -136,7 +138,9 @@ export default function TownTab({ store }: TownTabProps) {
         {(Object.entries(JOBS) as [JobType, typeof JOBS[JobType]][]).map(([id, job]) => {
           if (id === 'miner' && !store.unlocks.minerals) return null;
           if (id === 'scholar' && store.buildings.library === 0) return null;
-          if (id === 'priest' && !store.unlocks.culture) return null;
+          if (id === 'priest' && (!store.unlocks.culture || store.buildings.amphitheatre === 0)) return null;
+          if (id === 'darkMatterScientist' && !store.unlocks.darkMatter) return null;
+          if (id === 'fluidEngineer' && !store.unlocks.fluid) return null;
 
           const count = jobCounts[id];
 
@@ -150,7 +154,7 @@ export default function TownTab({ store }: TownTabProps) {
               <div className={`flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full`}>
                 <div className={`flex items-center min-w-0 transition-all ${isCompact ? 'gap-2.5' : 'gap-4'}`}>
                   <span className={`shrink-0 transition-all ${isCompact ? 'text-xl' : 'text-2xl'}`}>
-                    {id === 'farmer' ? '🌱' : id === 'woodcutter' ? '⚡' : id === 'scholar' ? '🔬' : id === 'miner' ? '⛏️' : '🔊'}
+                    {id === 'farmer' ? '🌱' : id === 'woodcutter' ? '⚡' : id === 'scholar' ? '🔬' : id === 'miner' ? '⛏️' : id === 'darkMatterScientist' ? '🌑' : id === 'fluidEngineer' ? '🧪' : '🔊'}
                   </span>
                   <div className={`min-w-0 flex flex-col ${isCompact ? 'gap-0.5' : 'gap-1.5'}`}>
                     <div className="flex items-center gap-2">
@@ -177,7 +181,7 @@ export default function TownTab({ store }: TownTabProps) {
                 {/* Direct quick action assigners */}
                 <div className="flex items-center gap-1.5 shrink-0 self-start xl:self-center">
                   <button 
-                    onClick={() => handleUnassignMultiple(id, store.buyMultiplier || 1)}
+                    onClick={() => handleUnassignMultiple(id, store.buyMultiplier === 'max' ? 99999 : (store.buyMultiplier || 1))}
                     disabled={count === 0}
                     className={`flex items-center justify-center bg-transparent border theme-border theme-text-main hover:theme-bg-hover disabled:opacity-20 rounded-full active:scale-95 transition-all cursor-pointer ${
                       isCompact ? 'w-8 h-8' : 'w-10 h-10'
@@ -196,7 +200,7 @@ export default function TownTab({ store }: TownTabProps) {
                   </button>
 
                   <button 
-                    onClick={() => handleAssignMultiple(id, store.buyMultiplier || 1)}
+                    onClick={() => handleAssignMultiple(id, store.buyMultiplier === 'max' ? 99999 : (store.buyMultiplier || 1))}
                     disabled={freeKittens === 0}
                     className={`flex items-center justify-center bg-transparent border theme-border theme-text-main hover:theme-bg-hover disabled:opacity-20 rounded-full active:scale-95 transition-all cursor-pointer ${
                       isCompact ? 'w-8 h-8' : 'w-10 h-10'
@@ -226,8 +230,8 @@ export default function TownTab({ store }: TownTabProps) {
                   <span className="font-bold text-sm tracking-wide theme-text-main block truncate leading-tight mb-1.5">
                     {kitten.name} {kitten.surname}
                   </span>
-                  <span className="text-[10px] theme-text-muted font-mono truncate block uppercase">
-                    GEN {kitten.level} • {kitten.trait}
+                  <span className="text-[10px] theme-text-muted font-mono block uppercase">
+                    GEN {kitten.level} • {kitten.trait || 'Normal'}
                   </span>
                 </div>
 
@@ -246,8 +250,14 @@ export default function TownTab({ store }: TownTabProps) {
                   {store.unlocks.minerals && (
                     <option value="miner">⛏️ Crystal Digger</option>
                   )}
-                  {store.unlocks.culture && (
+                  {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
                     <option value="priest">🔊 Schwifty Chanter</option>
+                  )}
+                  {store.unlocks.darkMatter && (
+                    <option value="darkMatterScientist">🌑 Dark Matter Scientist</option>
+                  )}
+                  {store.unlocks.fluid && (
+                    <option value="fluidEngineer">🧪 Fluid Engineer</option>
                   )}
                 </select>
               </div>

@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameState } from '../types';
-import { Settings, Zap, RotateCcw, Skull, Layout, Palette } from 'lucide-react';
+import { Settings, Zap, RotateCcw, Skull, Layout, Palette, AlertTriangle } from 'lucide-react';
 
 interface SettingsTabProps {
   store: GameState;
 }
 
 export default function SettingsTab({ store }: SettingsTabProps) {
+  const [showPortalConfirm, setShowPortalConfirm] = useState(false);
+  const [showHardResetConfirm, setShowHardResetConfirm] = useState(false);
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg mx-auto p-6 animate-fade-in">
       <h2 className="text-2xl font-black theme-text-main flex items-center gap-3">
@@ -98,7 +101,7 @@ export default function SettingsTab({ store }: SettingsTabProps) {
           </div>
         ) : (
           <div className="text-xs theme-text-muted mt-4 leading-relaxed theme-bg-card p-3 rounded-xl border theme-border">
-            🌳 Standard settings: Normal seed requirements, standard seasons modifiers, and safe spatial borders with zero anomaly threats.
+            🌳 Standard settings: Normal seed requirements, standard dimension modifiers, and safe spatial borders with zero anomaly threats.
           </div>
         )}
       </div>
@@ -159,13 +162,88 @@ export default function SettingsTab({ store }: SettingsTabProps) {
           <div className="text-3xl font-black text-[#39ff14] drop-shadow-sm">{store.portalFlux}</div>
         </div>
         
-        <button
-          onClick={store.portalReset}
-          className="w-full mt-6 flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 text-white border border-red-600 p-4 rounded-xl font-bold uppercase tracking-wide transition-all drop-shadow-sm"
-        >
-          <RotateCcw size={18} />
-          Portal Reset (Dimension Hop)
-        </button>
+        <div className="theme-bg-card p-4 rounded-xl mt-3 border theme-border flex justify-between items-center">
+          <div className="text-sm font-bold theme-text-main">
+            Flux Available on Hop:
+          </div>
+          <div className="text-xl font-black text-emerald-400">
+            +{Math.floor(Math.sqrt((Object.values(store.buildings).reduce((a, b) => a + b, 0) * 2 + (store.village?.kittens?.length || 0) * 5 + 1) / 2))}
+          </div>
+        </div>
+
+        {!showPortalConfirm ? (
+          <button
+            onClick={() => setShowPortalConfirm(true)}
+            className="w-full mt-6 flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 text-white border border-red-600 p-4 rounded-xl font-bold uppercase tracking-wide transition-all drop-shadow-sm cursor-pointer"
+          >
+            <RotateCcw size={18} />
+            Portal Reset (Dimension Hop)
+          </button>
+        ) : (
+          <div className="w-full mt-6 flex flex-col gap-3 bg-red-500/10 border border-red-500/50 p-4 rounded-xl">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
+              <div className="text-sm theme-text-main">
+                <span className="font-bold text-red-500 block mb-1">WARNING: Dimension Hop</span>
+                Are you absolutely sure you want to trigger a dimension hop? Buildings, clones, and resources will be reset. You will retain <span className="text-[#39ff14] font-bold">Researched Tech, Upgrades, Unlocks,</span> and Portal Flux points.
+              </div>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => {
+                  setShowPortalConfirm(false);
+                  store.portalReset();
+                }}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                CONFIRM HOP
+              </button>
+              <button
+                onClick={() => setShowPortalConfirm(false)}
+                className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!showHardResetConfirm ? (
+          <button
+            onClick={() => setShowHardResetConfirm(true)}
+            className="w-full mt-4 flex items-center justify-center gap-3 bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/50 p-4 rounded-xl font-bold uppercase tracking-wide transition-all drop-shadow-sm cursor-pointer"
+          >
+            <Skull size={18} />
+            Hard Reset (Wipe All Progress)
+          </button>
+        ) : (
+          <div className="w-full mt-4 flex flex-col gap-3 bg-red-950 border border-red-600 p-4 rounded-xl">
+            <div className="flex items-start gap-3">
+              <Skull className="text-red-400 shrink-0 mt-0.5" size={20} />
+              <div className="text-sm theme-text-main">
+                <span className="font-bold text-red-400 block mb-1">CRITICAL WARNING: WIPE SAVE</span>
+                Are you absolutely sure you want to completely WIPE your save? You will lose EVERYTHING, including Portal Flux and Achievements. This cannot be undone.
+              </div>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => {
+                  setShowHardResetConfirm(false);
+                  store.hardReset();
+                }}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                WIPE EVERYTHING
+              </button>
+              <button
+                onClick={() => setShowHardResetConfirm(false)}
+                className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

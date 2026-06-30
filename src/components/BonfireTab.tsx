@@ -42,10 +42,8 @@ export default function BonfireTab({ store }: BonfireTabProps) {
     iron: 'Neutrium',
     science: 'Portal Tech',
     culture: 'Schwifty Vibes',
-    beam: 'Nano-Beam',
-    slab: 'Hyper-Slab',
-    plate: 'Neutrium Plate',
-    parchment: 'Portal Formula'
+    darkMatter: 'Dark Matter',
+    portalFluid: 'Portal Fluid'
   };
 
   // Human-friendly specs description generator to enrich the UI cards
@@ -64,6 +62,9 @@ export default function BonfireTab({ store }: BonfireTabProps) {
       case 'mine': return '+0.05 Crystals/sec passive harvest';
       case 'smelter': return 'Processes Crystals & Plutonium into Neutrium';
       case 'amphitheatre': return '+4% Happiness & decreases existential dread';
+      case 'darkMatterExtractor': return 'Extracts volatile dark matter';
+      case 'cloningVat': return '+50 Morty capacity';
+      case 'portalGenerator': return 'Generates pure portal fluid';
       default: return 'Provides localized efficiency improvements.';
     }
   };
@@ -160,25 +161,32 @@ export default function BonfireTab({ store }: BonfireTabProps) {
           // Pre-requisites checks for tidy, progressive disclosure
           if (id === 'aqueduct' && !store.researched.agriculture) return null;
           if (id === 'pasture' && !store.unlocks.wood) return null;
+          if (id === 'hut' && !store.unlocks.wood) return null;
           if (id === 'logHouse' && !store.researched.woodworking) return null;
+          if (id === 'mansion' && !store.researched.theology) return null;
+          if (id === 'barn' && !store.unlocks.wood) return null;
+          if (id === 'warehouse' && !store.unlocks.minerals) return null;
+          if (id === 'library' && !store.unlocks.wood) return null;
+          if (id === 'academy' && !store.researched.writing) return null;
           if (id === 'mine' && !store.researched.mining) return null;
           if (id === 'smelter' && !store.researched.metalworking) return null;
-          if (id === 'academy' && !store.researched.writing) return null;
           if (id === 'amphitheatre' && !store.researched.theology) return null;
-          if (id === 'mansion' && !store.researched.theology) return null;
-          if (id === 'warehouse' && !store.unlocks.minerals) return null;
+          if (id === 'darkMatterExtractor' && !store.researched.darkMatterPhysics) return null;
+          if (id === 'cloningVat' && !store.researched.darkMatterPhysics) return null;
+          if (id === 'portalGenerator' && !store.researched.fluidDynamics) return null;
 
           // Category filter
           if (selectedSubTab !== 'all' && b.category !== selectedSubTab) return null;
 
           const count = store.buildings[id] || 0;
-          const multiplier = store.buyMultiplier || 1;
+          const isMaxMultiplier = store.buyMultiplier === 'max';
+          const multiplier = isMaxMultiplier ? 1 : (store.buyMultiplier as number || 1);
           const cardTheme = getCategoryTheme(b.category);
 
           // Evaluate Cost affordability
           let canAfford = true;
           const isMaxed = b.maxLimit !== undefined && count >= b.maxLimit;
-          const exceedsLimit = b.maxLimit !== undefined && count + multiplier > b.maxLimit;
+          const exceedsLimit = !isMaxMultiplier && b.maxLimit !== undefined && count + multiplier > b.maxLimit;
 
           if (isMaxed || exceedsLimit) {
             canAfford = false;

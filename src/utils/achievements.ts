@@ -35,11 +35,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'wood_100',
     name: 'Dimensional Arborist',
-    desc: 'Refine a substantial batch of high-temperature Dimensional Wood.',
+    desc: 'Gather a substantial batch of high-temperature Plutonium.',
     quote: 'Turns out alternative timelines have alternative lumber yards.',
     badgeEmoji: '🪵',
     category: 'resources',
-    conditionDesc: 'Accumulate 100 Dimensional Wood',
+    conditionDesc: 'Accumulate 100 Plutonium',
     check: (state) => (state.resources?.wood?.amount ?? 0) >= 100
   },
   {
@@ -55,12 +55,12 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'iron_1k',
     name: 'Neutra-Plate Machinist',
-    desc: 'Stockpile strong alloys of refined Neutrium metal plates.',
+    desc: 'Stockpile strong quantities of raw Neutrium iron.',
     quote: 'This alloy can withstand a direct blast from a Purge planet tank.',
     badgeEmoji: '⚙️',
     category: 'resources',
-    conditionDesc: 'Reach 1,000 Neutrium Plates or raw Iron',
-    check: (state) => (state.resources?.iron?.amount ?? 0) >= 1000 || (state.resources?.plate?.amount ?? 0) >= 10
+    conditionDesc: 'Reach 1,000 raw Iron',
+    check: (state) => (state.resources?.iron?.amount ?? 0) >= 1000
   },
   {
     id: 'science_5k',
@@ -113,14 +113,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     check: (state) => (state.village?.kittens?.length ?? 0) >= 100
   },
   {
-    id: 'parchment_50',
-    name: 'Portal Blueprints Stack',
-    desc: 'Forge enough Portal Formulas to chart safe cosmic pathways.',
-    quote: 'We\'ve got the formulas, Morty! The green swirls of freedom!',
-    badgeEmoji: '📜',
+    id: 'culture_10k',
+    name: 'Galactic Rockstar',
+    desc: 'Amass massive amounts of Schwifty Vibes to influence the cosmos.',
+    quote: 'Get Schwifty! Show them what you got!',
+    badgeEmoji: '🎵',
     category: 'quantum',
-    conditionDesc: 'Craft 50 Portal Formulas (Parchments)',
-    check: (state) => (state.resources?.parchment?.amount ?? 0) >= 50
+    conditionDesc: 'Gather 10,000 Schwifty Vibes',
+    check: (state) => (state.resources?.culture?.amount ?? 0) >= 10000
   },
   {
     id: 'total_buildings_50',

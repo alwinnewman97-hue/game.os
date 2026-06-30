@@ -3,7 +3,7 @@ import {
   JobType, 
   ScienceType, 
   UpgradeType, 
-  SeasonType, 
+  DimensionType, 
   ResourceType,
   PortalUpgradeType
 } from './types';
@@ -41,29 +41,32 @@ export interface UpgradeDef {
 export const BUILDINGS: Record<BuildingType, BuildingDef> = {
   catnipField: {
     name: 'Mega-Seed Greenhouse',
-    desc: 'A bio-engineered nursery to cultivate psychoactive Mega Seeds.',
+    desc: 'A bio-engineered nursery to cultivate psychoactive Mega Seeds. Max limit: 100.',
     baseCost: { catnip: 15 },
     costRatio: 1.12,
-    category: 'production'
+    category: 'production',
+    maxLimit: 100
   },
   aqueduct: {
     name: 'Portal Irrigation Pipe',
-    desc: 'An advanced inter-dimensional hydration array. Boosts passive Mega Seed output by +25% per pipe.',
+    desc: 'An advanced inter-dimensional hydration array. Boosts passive Mega Seed output by +25% per pipe. Max limit: 50.',
     baseCost: { catnip: 150, wood: 25 },
     costRatio: 1.15,
-    category: 'production'
+    category: 'production',
+    maxLimit: 50
   },
   pasture: {
     name: 'Morty Play-Pen',
-    desc: 'Reduces individual Morty seed consumption rate by -0.15% (up to -50% total) by decreasing their anxiety levels.',
+    desc: 'Reduces individual Morty seed consumption rate by -0.15% (up to -50% total) by decreasing their anxiety levels. Max limit: 40.',
     baseCost: { catnip: 250, wood: 50 },
     costRatio: 1.18,
-    category: 'production'
+    category: 'production',
+    maxLimit: 40
   },
   hut: {
     name: 'Garage Laboratory',
     desc: 'Provides a workbench and standard camping quarters for up to 2 Mortys. Max limit: 15.',
-    baseCost: { wood: 5 },
+    baseCost: { catnip: 150 },
     costRatio: 2.50,
     category: 'residential',
     maxLimit: 15
@@ -86,52 +89,83 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
   },
   barn: {
     name: 'Dimension Vault',
-    desc: 'Expands maximum containment capacities of Mega Seeds (+5,000), Plutonium (+200), Kalaxian Crystals (+200), and Neutrium (+50).',
+    desc: 'Expands maximum containment capacities of Mega Seeds (+5,000), Plutonium (+200), Kalaxian Crystals (+200), and Neutrium (+50). Max limit: 60.',
     baseCost: { wood: 50 },
     costRatio: 1.75,
-    category: 'storage'
+    category: 'storage',
+    maxLimit: 60
   },
   warehouse: {
     name: 'Microverse Depot',
-    desc: 'Sub-atomic containment unit. Expands Plutonium (+150), Crystals (+500), and Neutrium (+150). Increases Forbidden Tech capacity (+100).',
+    desc: 'Sub-atomic containment unit. Expands Plutonium (+150), Crystals (+500), and Neutrium (+150). Increases Forbidden Tech capacity (+100). Max limit: 45.',
     baseCost: { wood: 150, minerals: 100 },
     costRatio: 1.15,
-    category: 'storage'
+    category: 'storage',
+    maxLimit: 45
   },
   library: {
     name: "Rick's Cyber-Terminal",
-    desc: "A modified terminal linked to Citadel files. Increments Forbidden Tech/Science capacity (+250).",
+    desc: "A modified terminal linked to Citadel files. Increments Forbidden Tech/Science capacity (+250). Max limit: 55.",
     baseCost: { wood: 25 },
     costRatio: 1.15,
-    category: 'scientific'
+    category: 'scientific',
+    maxLimit: 55
   },
   academy: {
     name: 'Morty Academy',
-    desc: 'An institute to instruct Mortys. Increases Forbidden Tech limit (+1,000) and boosts scholar Morty productivity (+20% each).',
+    desc: 'An institute to instruct Mortys. Increases Forbidden Tech limit (+1,000) and boosts scholar Morty productivity (+20% each). Max limit: 35.',
     baseCost: { wood: 250, minerals: 150, iron: 20 },
     costRatio: 1.15,
-    category: 'scientific'
+    category: 'scientific',
+    maxLimit: 35
   },
   mine: {
     name: 'Kalaxian Fault',
-    desc: 'Harvests crystalline Kalaxian shards from deep meteor fault lines, providing passives & unlocking extraction jobs.',
+    desc: 'Harvests crystalline Kalaxian shards from deep meteor fault lines, providing passives & unlocking extraction jobs. Max limit: 50.',
     baseCost: { wood: 100 },
     costRatio: 1.15,
-    category: 'production'
+    category: 'production',
+    maxLimit: 50
   },
   smelter: {
     name: 'Neutrium Reactor',
-    desc: 'Cold-fusion furnace. Consumes -1.0 Plutonium & -10 Kalaxian Crystals/s, but produces +0.18 Neutrium/s.',
+    desc: 'Cold-fusion furnace. Consumes -1.0 Plutonium & -10 Kalaxian Crystals/s, but produces +0.18 Neutrium/s. Max limit: 25.',
     baseCost: { minerals: 200 },
     costRatio: 1.15,
-    category: 'production'
+    category: 'production',
+    maxLimit: 25
   },
   amphitheatre: {
     name: 'Schwifty Stage',
-    desc: 'GET SCHWIFTY! Boosts global Morty happiness (+4% each) and dampens population existential dread.',
+    desc: 'GET SCHWIFTY! Boosts global Morty happiness (+4% each) and dampens population existential dread. Max limit: 20.',
     baseCost: { wood: 150, minerals: 50, iron: 10 },
     costRatio: 1.15,
-    category: 'residential'
+    category: 'residential',
+    maxLimit: 20
+  },
+  darkMatterExtractor: {
+    name: 'Dark Matter Extractor',
+    desc: 'Extracts volatile dark matter from the vacuum of space. Max limit: 15.',
+    baseCost: { iron: 1500, science: 2500 },
+    costRatio: 1.15,
+    category: 'production',
+    maxLimit: 15
+  },
+  cloningVat: {
+    name: 'Operation Phoenix Vat',
+    desc: 'Advanced cloning vat. Increases maximum Morty limit by +50. Consumes dark matter to run. Max limit: 10.',
+    baseCost: { iron: 3000, minerals: 5000 },
+    costRatio: 1.25,
+    category: 'residential',
+    maxLimit: 10
+  },
+  portalGenerator: {
+    name: 'Portal Fluid Generator',
+    desc: 'Synthesizes pure portal fluid from Kalaxian crystals and dark matter. Max limit: 12.',
+    baseCost: { iron: 5000, minerals: 10000, darkMatter: 500 },
+    costRatio: 1.30,
+    category: 'production',
+    maxLimit: 12
   }
 };
 
@@ -165,6 +199,18 @@ export const JOBS: Record<JobType, JobDef> = {
     desc: 'Sings hit songs to get the crowd Schwifty, raising Citadel Vibe.',
     effectsDesc: '+0.15 Vibe/sec',
     icon: 'Flame'
+  },
+  darkMatterScientist: {
+    name: 'Dark Matter Scientist',
+    desc: 'Processes raw space vacuum into usable dark matter.',
+    effectsDesc: '+0.05 Dark Matter/sec',
+    icon: 'Atom'
+  },
+  fluidEngineer: {
+    name: 'Portal Fluid Engineer',
+    desc: 'Maintains fluid processors to generate Portal Fluid.',
+    effectsDesc: '+0.02 Portal Fluid/sec',
+    icon: 'FlaskConical'
   }
 };
 
@@ -210,6 +256,18 @@ export const SCIENCES: Record<ScienceType, ScienceDef> = {
     desc: 'Understanding the cosmic heads in the sky. SHOW ME WHAT YOU GOT.',
     cost: { science: 1250, catnip: 5000 },
     effectsDesc: 'Unlocks Schwifty Musician job, Schwifty Stages and Schwifty Vibes'
+  },
+  darkMatterPhysics: {
+    name: 'Dark Matter Physics',
+    desc: 'The study of the invisible mass holding the universe together.',
+    cost: { science: 3000, iron: 500 },
+    effectsDesc: 'Unlocks Dark Matter Extractors and Scientists.'
+  },
+  fluidDynamics: {
+    name: 'Portal Fluid Dynamics',
+    desc: 'Complex algorithms required to synthesize stable interdimensional portal fluid.',
+    cost: { science: 7500, darkMatter: 200 },
+    effectsDesc: 'Unlocks Portal Generators and Fluid Engineers.'
   }
 };
 
@@ -249,6 +307,18 @@ export const UPGRADES: Record<UpgradeType, UpgradeDef> = {
     desc: 'Sub-space thermal arrays that heat the Greenhouses during icy interdimensional periods.',
     cost: { science: 650, iron: 100, wood: 300 },
     effectsDesc: `Reduces Froopyland (Winter) crop penalty dramatically (min crop multiplier of 0.55 instead of 0.15)`
+  },
+  darkMatterContainment: {
+    name: 'Dark Matter Containment Fields',
+    desc: 'Magnetic fields to store dark matter safely.',
+    cost: { science: 2500, iron: 1000 },
+    effectsDesc: 'Increases Dark Matter storage by +500'
+  },
+  fluidTanks: {
+    name: 'Portal Fluid Silos',
+    desc: 'Hyper-pressurized glass silos for portal fluid.',
+    cost: { science: 5000, darkMatter: 500 },
+    effectsDesc: 'Increases Portal Fluid storage by +250'
   }
 };
 
@@ -303,35 +373,41 @@ export function generateRandomKitten(): {
   };
 }
 
-export const SEASONS_DATA: Record<SeasonType, {
+export const DIMENSIONS_DATA: Record<DimensionType, {
   name: string;
   catnipModifier: number; // multiplier on farmer and field production
   desc: string;
   color: string;
 }> = {
-  Spring: {
-    name: 'Citadel of Ricks',
-    catnipModifier: 1.50, // crops flourish
-    desc: 'Dense technosphere of infinite Ricks and Mortys. Mega Seed cultivation grows beautifully (+50%).',
-    color: 'emerald'
-  },
-  Summer: {
+  EarthC137: {
     name: 'Dimension C-137',
     catnipModifier: 1.00, // standard rate
     desc: 'Standard green Earth universe. Mega Seeds grow at perfect baseline rates.',
     color: 'amber'
   },
-  Autumn: {
+  Froopyland: {
+    name: 'Froopyland',
+    catnipModifier: 0.15, // severe penalty
+    desc: 'A candy-coated nightmare dimension frozen by cryogenic rifts. Greenhouses freeze up (-85%)! Rely on vault storage.',
+    color: 'blue'
+  },
+  Citadel: {
+    name: 'Citadel of Ricks',
+    catnipModifier: 1.50, // crops flourish
+    desc: 'Dense technosphere of infinite Ricks and Mortys. Mega Seed cultivation grows beautifully (+50%).',
+    color: 'emerald'
+  },
+  Gazorpazorp: {
     name: 'Gazorpazorp',
     catnipModifier: 0.70, // fading crops
     desc: 'A scarlet alien land governed by volatile creatures. Cultivation falls off (-30%).',
     color: 'orange'
   },
-  Winter: {
-    name: 'Froopyland',
-    catnipModifier: 0.15, // severe penalty
-    desc: 'A candy-coated nightmare dimension frozen by cryogenic rifts. Grenhouses freeze up (-85%)! Rely on vault storage.',
-    color: 'blue'
+  Cronenberg: {
+    name: 'Cronenberg World',
+    catnipModifier: 0.50,
+    desc: 'A horrific dimension populated by mutated abominations. Cultivation is incredibly difficult.',
+    color: 'red'
   }
 };
 

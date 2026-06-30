@@ -2,7 +2,7 @@ import React from 'react';
 import { GameState, ScienceType, ResourceType, PortalUpgradeType } from '../types';
 import { SCIENCES, PORTAL_UPGRADES } from '../gameData';
 import { playClickSound, triggerHaptic } from '../utils/audio';
-import { FlaskConical, Check, Sparkles, BookOpen, GraduationCap, Compass, Microscope, Clock, Zap } from 'lucide-react';
+import { FlaskConical, Check, Sparkles, BookOpen, GraduationCap, Compass, Microscope, Clock, Zap, Atom } from 'lucide-react';
 
 interface ScienceTabProps {
   store: GameState;
@@ -30,10 +30,8 @@ export default function ScienceTab({ store }: ScienceTabProps) {
     iron: 'Neutrium',
     science: 'Portal Tech',
     culture: 'Schwifty Vibes',
-    beam: 'Nano-Beam',
-    slab: 'Hyper-Slab',
-    plate: 'Neutrium Plate',
-    parchment: 'Portal Formula'
+    darkMatter: 'Dark Matter',
+    portalFluid: 'Portal Fluid'
   };
 
   // Helper icons for research types
@@ -46,6 +44,8 @@ export default function ScienceTab({ store }: ScienceTabProps) {
       case 'metalworking': return <Sparkles size={18} className="text-purple-400" />;
       case 'writing': return <FlaskConical size={18} className="text-emerald-300" />;
       case 'theology': return <Sparkles size={18} className="text-pink-400" />;
+      case 'darkMatterPhysics': return <Atom size={18} className="text-purple-400" />;
+      case 'fluidDynamics': return <FlaskConical size={18} className="text-blue-400" />;
       default: return <FlaskConical size={18} className="text-[#39ff14]" />;
     }
   };
@@ -87,6 +87,8 @@ export default function ScienceTab({ store }: ScienceTabProps) {
           if (id === 'metalworking' && !store.researched.mining) return null;
           if (id === 'writing' && !store.researched.woodworking) return null;
           if (id === 'theology' && !store.researched.writing) return null;
+          if (id === 'darkMatterPhysics' && !store.researched.metalworking) return null;
+          if (id === 'fluidDynamics' && !store.researched.darkMatterPhysics) return null;
 
           let canAfford = true;
           const costsList = Object.entries(s.cost).map(([res, costVal]) => {

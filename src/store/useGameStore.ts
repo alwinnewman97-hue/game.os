@@ -8,12 +8,12 @@ import {
   ScienceType, 
   UpgradeType, 
   PortalUpgradeType,
-  SeasonType, 
+  DimensionType, 
   Kitten, 
   GameLogMessage,
   ActiveCertificateBoost
 } from '../types';
-import { BUILDINGS, SCIENCES, JOBS, UPGRADES, PORTAL_UPGRADES, SEASONS_DATA, generateRandomKitten } from '../gameData';
+import { BUILDINGS, SCIENCES, JOBS, UPGRADES, PORTAL_UPGRADES, DIMENSIONS_DATA, generateRandomKitten } from '../gameData';
 import { ACHIEVEMENTS } from '../utils/achievements';
 
 export interface CertificateDef {
@@ -23,11 +23,11 @@ export interface CertificateDef {
   boostPercent: number; // 0.15 = 15%
   duration: number; // in seconds (e.g. 180)
   costs: {
-    parchment: number; // Portal Formula
-    beam?: number; // Nano-Beam
-    slab?: number; // Hyper-Slab
-    plate?: number; // Neutrium Plate
-    science?: number; // Portal Tech
+    science?: number;
+    culture?: number;
+    wood?: number;
+    minerals?: number;
+    iron?: number;
   };
 }
 
@@ -39,9 +39,9 @@ export const CERTIFICATES: Record<string, CertificateDef> = {
     boostPercent: 0.15,
     duration: 180,
     costs: {
-      parchment: 8,
-      beam: 12,
-      slab: 12,
+      science: 500,
+      wood: 2500,
+      minerals: 2500,
     }
   },
   silver: {
@@ -51,9 +51,9 @@ export const CERTIFICATES: Record<string, CertificateDef> = {
     boostPercent: 0.30,
     duration: 360,
     costs: {
-      parchment: 20,
-      beam: 25,
-      plate: 25,
+      science: 2500,
+      wood: 5000,
+      iron: 3000,
     }
   },
   gold: {
@@ -63,10 +63,10 @@ export const CERTIFICATES: Record<string, CertificateDef> = {
     boostPercent: 0.60,
     duration: 720,
     costs: {
-      parchment: 45,
-      slab: 45,
-      plate: 45,
-      science: 1500,
+      culture: 1000,
+      minerals: 10000,
+      iron: 6000,
+      science: 10000,
     }
   },
   infinite: {
@@ -76,14 +76,16 @@ export const CERTIFICATES: Record<string, CertificateDef> = {
     boostPercent: 1.00,
     duration: 1200,
     costs: {
-      parchment: 100,
-      beam: 90,
-      slab: 90,
-      plate: 90,
-      science: 4000,
+      culture: 5000,
+      wood: 25000,
+      minerals: 25000,
+      iron: 15000,
+      science: 25000,
     }
   }
 };
+
+export const DAY_DURATION_IN_GAME_SEC = 2700; // 1 real-life day = 1 in-game year (160 days * 2700 units)
 
 const BASE_RESOURCES: Record<ResourceType, { amount: number; max: number }> = {
   catnip: { amount: 50, max: 2000 },
@@ -92,10 +94,9 @@ const BASE_RESOURCES: Record<ResourceType, { amount: number; max: number }> = {
   iron: { amount: 0, max: 0 },
   science: { amount: 0, max: 0 },
   culture: { amount: 0, max: 0 },
-  parchment: { amount: 0, max: 100 },
-  beam: { amount: 0, max: 100 },
-  slab: { amount: 0, max: 100 },
-  plate: { amount: 0, max: 100 },
+  darkMatter: { amount: 0, max: 0 },
+  portalFluid: { amount: 0, max: 0 },
+  flurbo: { amount: 0, max: 1000 }
 };
 
 const BASE_BUILDINGS: Record<BuildingType, number> = {
@@ -111,7 +112,10 @@ const BASE_BUILDINGS: Record<BuildingType, number> = {
   academy: 0,
   mine: 0,
   smelter: 0,
-  amphitheatre: 0
+  amphitheatre: 0,
+  darkMatterExtractor: 0,
+  cloningVat: 0,
+  portalGenerator: 0
 };
 
 const BASE_RESEARCHED: Record<ScienceType, boolean> = {
@@ -121,7 +125,9 @@ const BASE_RESEARCHED: Record<ScienceType, boolean> = {
   mining: false,
   metalworking: false,
   writing: false,
-  theology: false
+  theology: false,
+  darkMatterPhysics: false,
+  fluidDynamics: false
 };
 
 const BASE_UPGRADES: Record<UpgradeType, boolean> = {
@@ -130,7 +136,9 @@ const BASE_UPGRADES: Record<UpgradeType, boolean> = {
   catnipSilos: false,
   reinforcedBarns: false,
   expandedStorage: false,
-  portalHeaters: false
+  portalHeaters: false,
+  darkMatterContainment: false,
+  fluidTanks: false
 };
 
 export const calculateCost = (baseCost: number, ratio: number, amount: number) => {
@@ -143,7 +151,9 @@ export function calculateJobStrengths(kittens: Kitten[]): Record<JobType, number
     woodcutter: 0,
     scholar: 0,
     miner: 0,
-    priest: 0
+    priest: 0,
+    darkMatterScientist: 0,
+    fluidEngineer: 0
   };
 
   if (!Array.isArray(kittens)) return strengths;
@@ -200,11 +210,11 @@ export const useGameStore = create<GameState>()(
       craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
       achievements: {},
       portalFlux: 0,
-      season: {
-        current: 'Spring',
-        daysPassed: 0,
-        totalDays: 100,
-      },
+      currentDimension: 'EarthC137',
+      year: 1,
+      season: 'spring',
+      day: 1,
+      dayProgress: 0,
       unlocks: {
         wood: false,
         minerals: false,
@@ -213,6 +223,8 @@ export const useGameStore = create<GameState>()(
         village: false,
         workshop: false,
         culture: false,
+        darkMatter: false,
+        fluid: false,
       },
       gameSpeed: 1,
       soundEnabled: true,
@@ -226,6 +238,7 @@ export const useGameStore = create<GameState>()(
       autoBuild: {
         pasture: false,
         barn: false,
+        catnipField: false,
       },
       portalResets: 0,
       prestigeMultiplier: 1.0,
@@ -249,7 +262,7 @@ export const useGameStore = create<GameState>()(
         }));
       },
 
-      toggleAutoBuild: (type: 'pasture' | 'barn') => set(state => ({
+      toggleAutoBuild: (type: 'pasture' | 'barn' | 'catnipField') => set(state => ({
         autoBuild: {
           ...state.autoBuild,
           [type]: !state.autoBuild[type]
@@ -259,7 +272,7 @@ export const useGameStore = create<GameState>()(
       setGameSpeed: (speed: number) => set({ gameSpeed: speed }),
       toggleSound: () => set(state => ({ soundEnabled: !state.soundEnabled })),
       setTheme: (theme: 'dark' | 'light' | 'trevor') => set({ theme }),
-      setBuyMultiplier: (multiplier: 1 | 5 | 25) => set({ buyMultiplier: multiplier }),
+      setBuyMultiplier: (multiplier: 1 | 5 | 'max') => set({ buyMultiplier: multiplier }),
 
       tick: (deltaSeconds: number) => {
         let state = get();
@@ -294,8 +307,120 @@ export const useGameStore = create<GameState>()(
         // Incorporate game speed and portal upgrades multipliers
         const chronalDilatorLevel = state.portalUpgrades?.chronalDilator ?? 0;
         const chronalMultiplier = 1 + (chronalDilatorLevel * 0.10);
-        const effectiveDelta = deltaSeconds * state.gameSpeed * 1.5 * chronalMultiplier; // slight speed-up to make incremental play feel super responsive
+        const effectiveDelta = deltaSeconds * state.gameSpeed * 5 * chronalMultiplier; // massive speed-up for super incremental feel
         const now = Date.now();
+
+        // ----------------------------------------
+        // SEASONAL CALENDAR SYSTEM
+        // ----------------------------------------
+        let dayProgress = (state.dayProgress !== undefined ? state.dayProgress : 0) + effectiveDelta;
+        let day = state.day !== undefined ? state.day : 1;
+        let season = state.season !== undefined ? state.season : 'spring';
+        let year = state.year !== undefined ? state.year : 1;
+
+        const seasonSequence: ('spring' | 'summer' | 'autumn' | 'winter')[] = ['spring', 'summer', 'autumn', 'winter'];
+        const seasonalLogs: GameLogMessage[] = [];
+
+        while (dayProgress >= DAY_DURATION_IN_GAME_SEC) {
+          dayProgress -= DAY_DURATION_IN_GAME_SEC;
+          day += 1;
+          if (day > 40) {
+            day = 1;
+            const currentIdx = seasonSequence.indexOf(season);
+            const nextIdx = (currentIdx + 1) % 4;
+            season = seasonSequence[nextIdx];
+            
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (season === 'spring') {
+              year += 1;
+              seasonalLogs.push({
+                id: `season-spring-${year}-${Math.random()}`,
+                time: timeStr,
+                text: `🎉 Happy New Year! Welcome to Year ${year} in the Citadel of Ricks!`,
+                type: 'success'
+              });
+            } else {
+              const seasonNames = {
+                spring: '🌱 Spring (Vernal Equinox)',
+                summer: '☀️ Summer (Solar Zenith)',
+                autumn: '🍁 Autumn (Golden Harvest)',
+                winter: '❄️ Winter (Cryo-Frost)'
+              };
+              seasonalLogs.push({
+                id: `season-trans-${season}-${year}-${Math.random()}`,
+                time: timeStr,
+                text: `🍂 The season has transitioned to ${seasonNames[season as 'spring' | 'summer' | 'autumn' | 'winter']}. Adapt your laboratories!`,
+                type: 'info'
+              });
+            }
+          }
+
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          // Seasonal festival / event triggers
+          if (season === 'spring' && day === 10) {
+            seasonalLogs.push({
+              id: `fest-spring-start-${Math.random()}`,
+              time: timeStr,
+              text: `🌸 Festival Started: "Citadel Spring Break"! Mortys are ecstatic! (+20% Happiness, +15% Job Speed for 5 days)`,
+              type: 'success'
+            });
+          } else if (season === 'spring' && day === 15) {
+            seasonalLogs.push({
+              id: `fest-spring-end-${Math.random()}`,
+              time: timeStr,
+              text: `🌸 "Citadel Spring Break" festival has ended. Back to research!`,
+              type: 'info'
+            });
+          } else if (season === 'summer' && day === 20) {
+            seasonalLogs.push({
+              id: `fest-summer-start-${Math.random()}`,
+              time: timeStr,
+              text: `🔥 Event Started: "Solar Purge"! Intense radiation doubles Plutonium scrap yield, but warning of spatial anomalies!`,
+              type: 'warn'
+            });
+          } else if (season === 'summer' && day === 23) {
+            seasonalLogs.push({
+              id: `fest-summer-end-${Math.random()}`,
+              time: timeStr,
+              text: `🔥 "Solar Purge" radiation has subsided. Plutonium scrap rates return to normal.`,
+              type: 'info'
+            });
+          } else if (season === 'autumn' && day === 15) {
+            seasonalLogs.push({
+              id: `fest-autumn-start-${Math.random()}`,
+              time: timeStr,
+              text: `🍁 Event Started: "The Great Seed Harvest"! Botanical clones gather +50% extra Mega Seeds!`,
+              type: 'success'
+            });
+          } else if (season === 'autumn' && day === 20) {
+            seasonalLogs.push({
+              id: `fest-autumn-end-${Math.random()}`,
+              time: timeStr,
+              text: `🍁 "The Great Seed Harvest" has concluded.`,
+              type: 'info'
+            });
+          } else if (season === 'winter' && day === 25) {
+            seasonalLogs.push({
+              id: `fest-winter-start-${Math.random()}`,
+              time: timeStr,
+              text: `🎁 Holiday Event: "Cromulon Gift-giving"! The giant heads are pleased. +30% Science and Culture generation!`,
+              type: 'success'
+            });
+          } else if (season === 'winter' && day === 30) {
+            seasonalLogs.push({
+              id: `fest-winter-end-${Math.random()}`,
+              time: timeStr,
+              text: `🎁 "Cromulon Gift-giving" event has ended.`,
+              type: 'info'
+            });
+          }
+        }
+
+        // Active event helpers
+        const isSpringBreak = season === 'spring' && day >= 10 && day < 15;
+        const isSolarPurge = season === 'summer' && day >= 20 && day < 23;
+        const isSeedHarvest = season === 'autumn' && day >= 15 && day < 20;
+        const isCromulonGifts = season === 'winter' && day >= 25 && day < 30;
 
         // Count down active certificates
         let updatedActive = (state.activeCertificates || []).map(cert => ({
@@ -319,7 +444,7 @@ export const useGameStore = create<GameState>()(
         const portalFluxMultiplier = 1 + (state.portalFlux * 0.1);
         const dimAmplifierLevel = state.portalUpgrades?.dimensionalAmplifier ?? 0;
         const dimensionalMultiplier = 1 + (dimAmplifierLevel * 0.15);
-        let productionMultiplier = certificateMultiplier * portalFluxMultiplier * dimensionalMultiplier;
+        let productionMultiplier = certificateMultiplier * portalFluxMultiplier * dimensionalMultiplier * 10; // 10x base production for super incremental feel
 
         // Anomaly tracking and processing
         let activeAnomaly = state.activeAnomaly ? { ...state.activeAnomaly } : null;
@@ -416,6 +541,9 @@ export const useGameStore = create<GameState>()(
         let maxMinerals = (state.buildings.barn * 250 * barnMultiplier) + (state.buildings.warehouse * 500 * warehouseMultiplier);
         let maxIron = (state.buildings.barn * 50 * barnMultiplier) + (state.buildings.warehouse * 150 * warehouseMultiplier);
         let maxScience = (state.buildings.library * 250) + (state.buildings.academy * 1000) + (state.buildings.warehouse * 100 * warehouseMultiplier);
+        
+        let maxDarkMatter = 0 + (state.upgrades.darkMatterContainment ? 500 : 0);
+        let maxPortalFluid = 0 + (state.upgrades.fluidTanks ? 250 : 0);
 
         const fluxAcceleratorLevel = state.portalUpgrades?.fluxAccelerator ?? 0;
         const storageMultiplier = 1 + (fluxAcceleratorLevel * 0.20);
@@ -424,6 +552,8 @@ export const useGameStore = create<GameState>()(
         maxMinerals *= storageMultiplier;
         maxIron *= storageMultiplier;
         maxScience *= storageMultiplier;
+        maxDarkMatter *= storageMultiplier;
+        maxPortalFluid *= storageMultiplier;
 
         if (microverseDecayActive) {
           maxCatnip *= 0.5;
@@ -431,26 +561,15 @@ export const useGameStore = create<GameState>()(
           maxMinerals *= 0.5;
           maxIron *= 0.5;
           maxScience *= 0.5;
+          maxDarkMatter *= 0.5;
+          maxPortalFluid *= 0.5;
         }
         
         // Max housing space
-        const maxKittens = (state.buildings.hut * 2) + (state.buildings.logHouse * 1) + (state.buildings.mansion * 4);
+        const maxKittens = (state.buildings.hut * 2) + (state.buildings.logHouse * 1) + (state.buildings.mansion * 4) + (state.buildings.cloningVat * 50);
 
-        // 2. Season Progression (2 seconds of tick time = 1 Day!)
-        let currentSeason = state.season.current;
-        let daysPassed = state.season.daysPassed + (effectiveDelta * 0.5);
-        if (daysPassed >= state.season.totalDays) {
-          daysPassed = 0;
-          const cycle: SeasonType[] = ['Spring', 'Summer', 'Autumn', 'Winter'];
-          const currentIndex = cycle.indexOf(currentSeason);
-          const nextIndex = (currentIndex + 1) % cycle.length;
-          currentSeason = cycle[nextIndex];
-          
-          state.addLog(
-            `A seasonal shift occurs! ${currentSeason} begins: ${SEASONS_DATA[currentSeason].desc}`,
-            'season'
-          );
-        }
+        // 2. Dimension Logic
+        let currentDimension = state.currentDimension;
 
         // 3. Happiness Calculations
         // Base is 100%. If population > 5, each extra kitten causes -2% crowding stress.
@@ -468,7 +587,16 @@ export const useGameStore = create<GameState>()(
           }
         });
         const amphitheatreBoost = state.buildings.amphitheatre * 4;
-        let finalHappiness = Math.min(150, Math.max(10, 100 - crowdingPenalty + amphitheatreBoost + travelerHappinessBoost));
+        
+        let seasonHappinessModifier = 0;
+        if (isSpringBreak) {
+          seasonHappinessModifier += 20;
+        }
+        if (season === 'winter' && !state.upgrades.portalHeaters) {
+          seasonHappinessModifier -= 10;
+        }
+        
+        let finalHappiness = Math.min(150, Math.max(10, 100 - crowdingPenalty + amphitheatreBoost + travelerHappinessBoost + seasonHappinessModifier));
 
         // 4. Job Production rates per second
         // Check kitten count in each job and calculate level plus trait adjusted job strengths
@@ -477,7 +605,9 @@ export const useGameStore = create<GameState>()(
           woodcutter: 0,
           scholar: 0,
           miner: 0,
-          priest: 0
+          priest: 0,
+          darkMatterScientist: 0,
+          fluidEngineer: 0
         };
         state.village.kittens.forEach(k => {
           if (k.job !== 'unemployed') {
@@ -489,19 +619,28 @@ export const useGameStore = create<GameState>()(
         // FARMING: boost from agriculture, season modifier, and aqueduct multiplier
         const farmerEffBonus = state.researched.agriculture ? 1.20 : 1.0;
         const agricultureGreenhouseBonus = state.researched.agriculture ? 1.25 : 1.0;
-        let seasonModifier = state.researched.calendar ? SEASONS_DATA[currentSeason].catnipModifier : 1.0;
+        let dimensionModifier = state.researched.calendar ? DIMENSIONS_DATA[currentDimension].catnipModifier : 1.0;
         
-        if (state.insaneMode && currentSeason === 'Winter') {
-          seasonModifier = state.upgrades.portalHeaters ? 0.35 : 0.05;
-        } else if (state.upgrades.portalHeaters && currentSeason === 'Winter') {
-          seasonModifier = Math.max(seasonModifier, 0.55);
+        if (state.insaneMode && currentDimension === 'Froopyland') {
+          dimensionModifier = state.upgrades.portalHeaters ? 0.35 : 0.05;
+        } else if (state.upgrades.portalHeaters && currentDimension === 'Froopyland') {
+          dimensionModifier = Math.max(dimensionModifier, 0.55);
         }
         
         const aqueductBoost = 1 + (state.buildings.aqueduct * 0.15); // +15% passive production per aqueduct
 
+        // Seasonal Farming effects
+        let seasonCropMultiplier = 1.0;
+        if (season === 'spring') seasonCropMultiplier = 1.25;
+        else if (season === 'summer') seasonCropMultiplier = 1.0;
+        else if (season === 'autumn') seasonCropMultiplier = isSeedHarvest ? 1.50 : 0.75;
+        else if (season === 'winter') {
+          seasonCropMultiplier = state.upgrades.portalHeaters ? 0.65 : 0.20;
+        }
+
         // Base field production is passive
-        const fieldsPassiveRate = state.buildings.catnipField * 0.63 * seasonModifier * aqueductBoost * agricultureGreenhouseBonus;
-        const farmerRate = jobStrengths.farmer * 5.0 * farmerEffBonus * seasonModifier * productionMultiplier;
+        const fieldsPassiveRate = state.buildings.catnipField * 0.63 * dimensionModifier * aqueductBoost * agricultureGreenhouseBonus * seasonCropMultiplier;
+        const farmerRate = jobStrengths.farmer * 5.0 * farmerEffBonus * dimensionModifier * productionMultiplier * seasonCropMultiplier;
         let catnipRate = fieldsPassiveRate + farmerRate;
 
         // KITTEN STARVATION: Each kitten consumes more under strain (hard mode)
@@ -533,32 +672,36 @@ export const useGameStore = create<GameState>()(
         // Efficiency modifier from happiness
         const efficiencyFactor = finalHappiness / 100;
 
-        // WOODCUTTER (Plutonium Scrapper) boosted by woodworking research
+        // WOODCUTTER (Plutonium Scrapper) boosted by woodworking research, spring break, and solar purge
         let axeMultiplier = 1.0;
         if (state.upgrades.ironAxes) axeMultiplier = 1.75;
         else if (state.upgrades.mineralAxes) axeMultiplier = 1.25;
 
+        const springBreakFactor = isSpringBreak ? 1.15 : 1.0;
+        const solarPurgeFactor = isSolarPurge ? 2.0 : 1.0;
+        const cromulonGiftsFactor = isCromulonGifts ? 1.30 : 1.0;
+
         const woodworkingWoodcutterBonus = state.researched.woodworking ? 1.15 : 1.0;
         const woodcutterBase = jobStrengths.woodcutter * 0.10 * axeMultiplier * efficiencyFactor * productionMultiplier * woodworkingWoodcutterBonus;
-        let woodRate = woodcutterBase;
+        let woodRate = woodcutterBase * springBreakFactor * solarPurgeFactor;
 
-        // SCHOLAR boosted by writing (Interdimensional Cable) research
+        // SCHOLAR boosted by writing (Interdimensional Cable) research, spring break, and Cromulon gifts
         // Libraries & academies boost scholars
         const academyScholarMod = 1 + (state.buildings.academy * 0.20);
         const writingScholarBonus = state.researched.writing ? 1.25 : 1.0;
         const quantumResonatorLevel = state.portalUpgrades?.quantumResonator ?? 0;
         const scholarResonatorMultiplier = 1 + (quantumResonatorLevel * 0.25);
-        let scienceRate = jobStrengths.scholar * 0.25 * academyScholarMod * efficiencyFactor * productionMultiplier * writingScholarBonus * scholarResonatorMultiplier;
+        let scienceRate = jobStrengths.scholar * 0.25 * academyScholarMod * efficiencyFactor * productionMultiplier * writingScholarBonus * scholarResonatorMultiplier * springBreakFactor * cromulonGiftsFactor;
 
-        // MINER boosted by mining (Laser Fault-Drilling) research
+        // MINER boosted by mining (Laser Fault-Drilling) research and spring break
         const miningMinerBonus = state.researched.mining ? 1.20 : 1.0;
-        const minerBase = jobStrengths.miner * 0.18 * efficiencyFactor * productionMultiplier * miningMinerBonus;
+        const minerBase = jobStrengths.miner * 0.18 * efficiencyFactor * productionMultiplier * miningMinerBonus * springBreakFactor;
         // Mine adds slightly passive mineral gain as well
         let mineralsRate = minerBase + (state.buildings.mine * 0.05 * miningMinerBonus);
 
-        // PRIEST (Schwifty Musician) boosted by theology (Cromulon Reverence) research
+        // PRIEST (Schwifty Musician) boosted by theology (Cromulon Reverence) research, spring break, and Cromulon gifts
         const theologyPriestBonus = state.researched.theology ? 1.40 : 1.0;
-        let cultureRate = jobStrengths.priest * 0.15 * efficiencyFactor * productionMultiplier * theologyPriestBonus;
+        let cultureRate = jobStrengths.priest * 0.15 * efficiencyFactor * productionMultiplier * theologyPriestBonus * springBreakFactor * cromulonGiftsFactor;
 
         // Apply passive anomaly drains
         woodRate -= customWoodDrain;
@@ -581,12 +724,34 @@ export const useGameStore = create<GameState>()(
           }
         }
 
+        // DARK MATTER SCIENTIST and EXTRACTOR
+        const darkMatterScientistRate = (jobStrengths.darkMatterScientist || 0) * 0.05 * efficiencyFactor * productionMultiplier;
+        const darkMatterExtractorRate = state.buildings.darkMatterExtractor * 0.15;
+        let darkMatterRate = darkMatterScientistRate + darkMatterExtractorRate;
+
+        // PORTAL FLUID ENGINEER and GENERATOR
+        // Consumes 5 dark matter and 10 minerals per tick per generator
+        const fluidEngineerRate = (jobStrengths.fluidEngineer || 0) * 0.02 * efficiencyFactor * productionMultiplier;
+        let portalFluidRate = fluidEngineerRate;
+        if (state.buildings.portalGenerator > 0) {
+          const count = state.buildings.portalGenerator;
+          const dmDemand = count * 5.0 * effectiveDelta;
+          const minDemand = count * 10.0 * effectiveDelta;
+          if (state.resources.darkMatter.amount >= dmDemand && state.resources.minerals.amount >= minDemand) {
+            darkMatterRate -= count * 5.0;
+            mineralsRate -= count * 10.0;
+            portalFluidRate += count * 0.08 * productionMultiplier;
+          }
+        }
+
         // Apply rates with delta
         let woodAmt = state.resources.wood.amount + (woodRate * effectiveDelta);
         let mineralsAmt = state.resources.minerals.amount + (mineralsRate * effectiveDelta);
         let scienceAmt = state.resources.science.amount + (scienceRate * effectiveDelta);
         let ironAmt = state.resources.iron.amount + (ironRate * effectiveDelta);
         let cultureAmt = state.resources.culture.amount + (cultureRate * effectiveDelta);
+        let darkMatterAmt = state.resources.darkMatter.amount + (darkMatterRate * effectiveDelta);
+        let portalFluidAmt = state.resources.portalFluid.amount + (portalFluidRate * effectiveDelta);
 
         // Apply instant disaster explosion impacts (if they go unresolved)
         const updatedKittens = [...state.village.kittens];
@@ -621,6 +786,8 @@ export const useGameStore = create<GameState>()(
         mineralsAmt = Math.min(mineralsAmt, maxMinerals);
         ironAmt = Math.min(ironAmt, maxIron);
         scienceAmt = Math.min(scienceAmt, maxScience);
+        darkMatterAmt = Math.min(darkMatterAmt, maxDarkMatter);
+        portalFluidAmt = Math.min(portalFluidAmt, maxPortalFluid);
         // Culture does not have a hard ceiling in standard kittens, let's cap at 10000 set in state
         cultureAmt = Math.min(cultureAmt, 100000);
 
@@ -630,10 +797,12 @@ export const useGameStore = create<GameState>()(
         if (scienceAmt < 0) scienceAmt = 0;
         if (ironAmt < 0) ironAmt = 0;
         if (cultureAmt < 0) cultureAmt = 0;
+        if (darkMatterAmt < 0) darkMatterAmt = 0;
+        if (portalFluidAmt < 0) portalFluidAmt = 0;
 
         // Auto-build
         const updatedBuildings = { ...state.buildings };
-        const autoBuildable = ['pasture', 'barn'] as const;
+        const autoBuildable = ['pasture', 'barn', 'catnipField'] as const;
         autoBuildable.forEach(b => {
           if (state.autoBuild?.[b]) {
             const bDef = BUILDINGS[b];
@@ -691,6 +860,12 @@ export const useGameStore = create<GameState>()(
         }
         if (!unlocks.culture && (cultureAmt > 0 || state.researched.theology)) {
           unlocks.culture = true;
+        }
+        if (!unlocks.darkMatter && (state.buildings.darkMatterExtractor > 0 || darkMatterAmt > 0 || state.researched.darkMatterPhysics)) {
+          unlocks.darkMatter = true;
+        }
+        if (!unlocks.fluid && (state.buildings.portalGenerator > 0 || portalFluidAmt > 0 || state.researched.fluidDynamics)) {
+          unlocks.fluid = true;
         }
 
         //6. Kitten Survival & Recruitment
@@ -751,10 +926,9 @@ export const useGameStore = create<GameState>()(
             iron: { amount: ironAmt, max: maxIron },
             science: { amount: scienceAmt, max: maxScience },
             culture: { amount: cultureAmt, max: 100000 },
-            parchment: { amount: state.resources.parchment.amount, max: 5000 },
-            beam: { amount: state.resources.beam.amount, max: 5000 },
-            slab: { amount: state.resources.slab.amount, max: 5000 },
-            plate: { amount: state.resources.plate.amount, max: 5000 },
+            darkMatter: { amount: darkMatterAmt, max: maxDarkMatter },
+            portalFluid: { amount: portalFluidAmt, max: maxPortalFluid },
+            flurbo: { amount: state.resources.flurbo.amount, max: state.resources.flurbo.max }
           },
           village: {
             kittens: updatedKittens,
@@ -768,7 +942,7 @@ export const useGameStore = create<GameState>()(
           craftedCertificatesCount: state.craftedCertificatesCount || { bronze: 0, silver: 0, gold: 0, infinite: 0 }
         } as any;
 
-        const logsToAppend: GameLogMessage[] = [];
+        const logsToAppend: GameLogMessage[] = [...seasonalLogs];
         ACHIEVEMENTS.forEach(ach => {
           if (!updatedAchievements[ach.id] && ach.check(tempState)) {
             updatedAchievements[ach.id] = true;
@@ -792,11 +966,11 @@ export const useGameStore = create<GameState>()(
           activeCertificates: updatedActive,
           achievements: updatedAchievements,
           logs: finalLogs,
-          season: {
-            ...state.season,
-            current: currentSeason,
-            daysPassed: Math.floor(daysPassed)
-          },
+          currentDimension,
+          year,
+          season,
+          day,
+          dayProgress,
           resources: {
             catnip: { amount: catnipAmt, max: maxCatnip },
             wood: { amount: woodAmt, max: maxWood },
@@ -804,11 +978,9 @@ export const useGameStore = create<GameState>()(
             iron: { amount: ironAmt, max: maxIron },
             science: { amount: scienceAmt, max: maxScience },
             culture: { amount: cultureAmt, max: 100000 },
-            // Crafted materials can hold up to 10M
-            parchment: { amount: state.resources.parchment.amount, max: 5000 },
-            beam: { amount: state.resources.beam.amount, max: 5000 },
-            slab: { amount: state.resources.slab.amount, max: 5000 },
-            plate: { amount: state.resources.plate.amount, max: 5000 },
+            darkMatter: { amount: darkMatterAmt, max: maxDarkMatter },
+            portalFluid: { amount: portalFluidAmt, max: maxPortalFluid },
+            flurbo: { amount: state.resources.flurbo.amount, max: state.resources.flurbo.max }
           },
           village: {
             kittens: updatedKittens,
@@ -838,73 +1010,65 @@ export const useGameStore = create<GameState>()(
         };
       }),
 
-      refineResource: (craftType, amount = 1) => set(state => {
-        const res = JSON.parse(JSON.stringify(state.resources)) as GameState['resources'];
-        
-        if (craftType === 'wood') {
-          // Refine catnip to wood: 100 catnip -> 1 wood
-          const catnipCost = 100 * amount;
-          if (res.catnip.amount >= catnipCost) {
-            res.catnip.amount -= catnipCost;
-            res.wood.amount = Math.min(res.wood.max, res.wood.amount + amount);
-            // play sound logic
-          }
-        } 
-        else if (craftType === 'beam') {
-          // Refine wood -> beam: 175 wood -> 1 beam
-          const cost = 175 * amount;
-          if (state.researched.woodworking && res.wood.amount >= cost) {
-            res.wood.amount -= cost;
-            res.beam.amount = Math.min(res.beam.max, res.beam.amount + amount);
-          }
-        } 
-        else if (craftType === 'slab') {
-          // Refine minerals -> slab: 250 minerals -> 1 slab
-          const cost = 250 * amount;
-          if (state.researched.mining && res.minerals.amount >= cost) {
-            res.minerals.amount -= cost;
-            res.slab.amount = Math.min(res.slab.max, res.slab.amount + amount);
-          }
-        } 
-        else if (craftType === 'plate') {
-          // Refine iron -> plate: 150 iron -> 1 plate
-          const cost = 150 * amount;
-          if (state.researched.metalworking && res.iron.amount >= cost) {
-            res.iron.amount -= cost;
-            res.plate.amount = Math.min(res.plate.max, res.plate.amount + amount);
-          }
-        } 
-        else if (craftType === 'parchment') {
-          // Refine science + culture -> parchment: 175 science + 5 culture -> 1 parchment
-          const sciCost = 175 * amount;
-          const cultCost = 5 * amount;
-          if (state.researched.writing && res.science.amount >= sciCost && res.culture.amount >= cultCost) {
-            res.science.amount -= sciCost;
-            res.culture.amount -= cultCost;
-            res.parchment.amount = Math.min(res.parchment.max, res.parchment.amount + amount);
-          }
-        }
-
-        return { resources: res };
-      }),
-
       buyBuilding: (type, quantity = 1) => set(state => {
         const bDef = BUILDINGS[type];
         const owned = state.buildings[type];
         
-        if (bDef.maxLimit !== undefined && owned + quantity > bDef.maxLimit) {
+        let actualQuantity = typeof quantity === 'number' ? quantity : 0;
+        const res = JSON.parse(JSON.stringify(state.resources)) as GameState['resources'];
+        
+        if (quantity === 'max') {
+          let canAffordMore = true;
+          let testQuantity = 0;
+          
+          while (canAffordMore) {
+            if (bDef.maxLimit !== undefined && owned + testQuantity >= bDef.maxLimit) {
+              break;
+            }
+            
+            let affordable = true;
+            for (const [resType, baseCost] of Object.entries(bDef.baseCost)) {
+              let totalCost = 0;
+              for (let i = 0; i <= testQuantity; i++) {
+                totalCost += calculateCost(baseCost, bDef.costRatio, owned + i);
+              }
+              const currentRes = res[resType as ResourceType];
+              if (!currentRes || currentRes.amount < totalCost) {
+                affordable = false;
+                break;
+              }
+            }
+            
+            if (affordable) {
+              testQuantity++;
+            } else {
+              canAffordMore = false;
+            }
+          }
+          actualQuantity = testQuantity;
+        }
+
+        if (actualQuantity <= 0) {
+          if (quantity === 'max') {
+             state.addLog(`Cannot afford any more ${bDef.name}.`, 'warn');
+          } else if (bDef.maxLimit !== undefined && owned + actualQuantity > bDef.maxLimit) {
+            state.addLog(`Access Denied! Capacity reached for ${bDef.name} (${owned}/${bDef.maxLimit}).`, 'warn');
+          }
+          return state;
+        }
+
+        if (bDef.maxLimit !== undefined && owned + actualQuantity > bDef.maxLimit) {
           state.addLog(`Access Denied! Capacity reached for ${bDef.name} (${owned}/${bDef.maxLimit}).`, 'warn');
           return state;
         }
         
         let canAfford = true;
-        const res = JSON.parse(JSON.stringify(state.resources)) as GameState['resources'];
         
         // evaluate costs
         const computedCosts: Record<string, number> = {};
         for (const [resType, baseCost] of Object.entries(bDef.baseCost)) {
           let totalCost = 0;
-          for (let i = 0; i < quantity; i++) {
+          for (let i = 0; i < actualQuantity; i++) {
             totalCost += calculateCost(baseCost, bDef.costRatio, owned + i);
           }
           computedCosts[resType] = totalCost;
@@ -922,14 +1086,14 @@ export const useGameStore = create<GameState>()(
             res[resType as ResourceType].amount -= costVal;
           }
           
-          const qtyText = quantity === 1 ? 'one' : `${quantity}x`;
+          const qtyText = actualQuantity === 1 ? 'one' : `${actualQuantity}x`;
           state.addLog(`Built ${qtyText} ${bDef.name} for the Citadel.`, 'success');
           
           return {
             resources: res,
             buildings: {
               ...state.buildings,
-              [type]: owned + quantity
+              [type]: owned + actualQuantity
             }
           };
         }
@@ -1156,48 +1320,48 @@ export const useGameStore = create<GameState>()(
         // Calculate flux from progress (total buildings + kittens)
         const totalBuildings = Object.values(state.buildings).reduce((a, b) => a + b, 0);
         const totalKittens = state.village.kittens.length;
-        const fluxEarned = Math.floor(Math.sqrt((totalBuildings + totalKittens + 1) / 10));
+        // Super incremental: much more generous flux gain
+        const fluxEarned = Math.floor(Math.sqrt((totalBuildings * 2 + totalKittens * 5 + 1) / 2));
 
-        if (window.confirm(`Are you absolutely sure you want to trigger a dimension hop? You will earn ${fluxEarned} Portal Flux, which grants a global ${fluxEarned * 10}% production multiplier. All other progress will be reset.`)) {
-          set({
-            resources: BASE_RESOURCES,
-            buildings: BASE_BUILDINGS,
-            researched: BASE_RESEARCHED,
-            upgrades: BASE_UPGRADES,
-            village: {
-              kittens: [],
-              maxKittens: 0,
-              happiness: 100,
-            },
-            activeCertificates: [],
-            craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
-            season: {
-              current: 'Spring',
-              daysPassed: 0,
-              totalDays: 100,
-            },
-            unlocks: {
-              wood: false,
-              minerals: false,
-              iron: false,
-              science: false,
-              village: false,
-              workshop: false,
-              culture: false,
-            },
-            logs: [
-              {
-                id: 'reset',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                text: `Portal Reset complete! You acquired ${fluxEarned} Portal Flux points. Welcome to a new dimension.`,
-                type: 'success'
-              }
-            ],
-            portalResets: state.portalResets + 1,
-            portalFlux: state.portalFlux + fluxEarned,
-            lastTick: Date.now()
-          });
-        }
+        const dimensions: DimensionType[] = ['EarthC137', 'Froopyland', 'Citadel', 'Gazorpazorp', 'Cronenberg'];
+        const currentIndex = dimensions.indexOf(state.currentDimension);
+        const nextDimension = dimensions[(currentIndex + 1) % dimensions.length];
+
+        set({
+          resources: BASE_RESOURCES,
+          buildings: BASE_BUILDINGS,
+          // Keep researched and upgrades for progression
+          unlocks: {
+            wood: false,
+            minerals: false,
+            iron: false,
+            science: false,
+            village: false,
+            workshop: false,
+            culture: false,
+            darkMatter: false,
+            fluid: false,
+          },
+          village: {
+            kittens: [],
+            maxKittens: 0,
+            happiness: 100,
+          },
+          activeCertificates: [],
+          craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
+          currentDimension: nextDimension,
+          logs: [
+            {
+              id: 'reset',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+              text: `Portal Reset complete! You acquired ${fluxEarned} Portal Flux points. Welcome to a new dimension: ${DIMENSIONS_DATA[nextDimension].name}.`,
+              type: 'success'
+            }
+          ],
+          portalResets: state.portalResets + 1,
+          portalFlux: state.portalFlux + fluxEarned,
+          lastTick: Date.now()
+        });
       },
 
       synthesizeCertificate: (certificateType: 'bronze' | 'silver' | 'gold' | 'infinite') => {
@@ -1213,12 +1377,11 @@ export const useGameStore = create<GameState>()(
           canAfford = false;
         }
 
-        const resCosts: { key: ResourceType; amount: number }[] = [
-          { key: 'parchment', amount: def.costs.parchment }
-        ];
-        if (def.costs.beam) resCosts.push({ key: 'beam', amount: def.costs.beam });
-        if (def.costs.slab) resCosts.push({ key: 'slab', amount: def.costs.slab });
-        if (def.costs.plate) resCosts.push({ key: 'plate', amount: def.costs.plate });
+        const resCosts: { key: ResourceType; amount: number }[] = [];
+        if (def.costs.wood) resCosts.push({ key: 'wood', amount: def.costs.wood });
+        if (def.costs.minerals) resCosts.push({ key: 'minerals', amount: def.costs.minerals });
+        if (def.costs.iron) resCosts.push({ key: 'iron', amount: def.costs.iron });
+        if (def.costs.culture) resCosts.push({ key: 'culture', amount: def.costs.culture });
 
         for (const costItem of resCosts) {
           if (!res[costItem.key] || res[costItem.key].amount < costItem.amount) {
@@ -1305,6 +1468,11 @@ export const useGameStore = create<GameState>()(
         }
       }),
 
+      hardReset: () => {
+        localStorage.removeItem('rick-and-morty-incremental-storage');
+        window.location.reload();
+      },
+
       setDensity: (density: 'compact' | 'relaxed') => set({ density })
     }),
     {
@@ -1363,6 +1531,17 @@ export const useGameStore = create<GameState>()(
           }
         }
 
+        // Merge autoBuild state safely
+        const mergedAutoBuild = { ...currentState.autoBuild };
+        if (persistedState.autoBuild) {
+          for (const key in currentState.autoBuild) {
+            const abKey = key as keyof typeof currentState.autoBuild;
+            if (typeof persistedState.autoBuild[abKey] === 'boolean') {
+              mergedAutoBuild[abKey] = persistedState.autoBuild[abKey];
+            }
+          }
+        }
+
         // Merge unlocks state safely
         const mergedUnlocks = { ...currentState.unlocks };
         if (persistedState.unlocks) {
@@ -1408,6 +1587,7 @@ export const useGameStore = create<GameState>()(
           buildings: mergedBuildings,
           researched: mergedResearched,
           upgrades: mergedUpgrades,
+          autoBuild: mergedAutoBuild,
           unlocks: mergedUnlocks,
           village: mergedVillage,
           activeCertificates: mergedActiveCertificates,
@@ -1416,9 +1596,13 @@ export const useGameStore = create<GameState>()(
           portalUpgrades: mergedPortalUpgrades,
           theme: persistedState.theme === 'light' ? 'light' : 'dark',
           density: (persistedState.density === 'compact' || persistedState.density === 'relaxed') ? persistedState.density : 'relaxed',
-          buyMultiplier: (persistedState.buyMultiplier === 1 || persistedState.buyMultiplier === 5 || persistedState.buyMultiplier === 25) 
+          buyMultiplier: (persistedState.buyMultiplier === 1 || persistedState.buyMultiplier === 5 || persistedState.buyMultiplier === 'max') 
             ? persistedState.buyMultiplier 
             : 1,
+          year: typeof persistedState.year === 'number' ? persistedState.year : currentState.year,
+          season: (persistedState.season === 'spring' || persistedState.season === 'summer' || persistedState.season === 'autumn' || persistedState.season === 'winter') ? persistedState.season : currentState.season,
+          day: typeof persistedState.day === 'number' ? persistedState.day : currentState.day,
+          dayProgress: typeof persistedState.dayProgress === 'number' ? persistedState.dayProgress : currentState.dayProgress,
         } as GameState;
       }
     }

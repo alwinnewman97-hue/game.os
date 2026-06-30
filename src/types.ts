@@ -5,10 +5,9 @@ export type ResourceType =
   | 'iron' 
   | 'science' 
   | 'culture' 
-  | 'parchment' 
-  | 'beam' 
-  | 'slab' 
-  | 'plate';
+  | 'darkMatter'
+  | 'portalFluid'
+  | 'flurbo';
 
 export type BuildingType = 
   | 'catnipField' 
@@ -23,14 +22,19 @@ export type BuildingType =
   | 'academy' 
   | 'mine' 
   | 'smelter' 
-  | 'amphitheatre';
+  | 'amphitheatre'
+  | 'darkMatterExtractor'
+  | 'cloningVat'
+  | 'portalGenerator';
 
 export type JobType = 
   | 'farmer' 
   | 'woodcutter' 
   | 'scholar' 
   | 'miner' 
-  | 'priest';
+  | 'priest'
+  | 'darkMatterScientist'
+  | 'fluidEngineer';
 
 export type ScienceType = 
   | 'calendar' 
@@ -39,7 +43,9 @@ export type ScienceType =
   | 'mining' 
   | 'metalworking' 
   | 'theology' 
-  | 'writing';
+  | 'writing'
+  | 'darkMatterPhysics'
+  | 'fluidDynamics';
 
 export type UpgradeType = 
   | 'mineralAxes' 
@@ -47,7 +53,9 @@ export type UpgradeType =
   | 'catnipSilos' 
   | 'reinforcedBarns' 
   | 'expandedStorage'
-  | 'portalHeaters';
+  | 'portalHeaters'
+  | 'darkMatterContainment'
+  | 'fluidTanks';
 
 export type PortalUpgradeType = 
   | 'dimensionalAmplifier' 
@@ -55,7 +63,7 @@ export type PortalUpgradeType =
   | 'fluxAccelerator'
   | 'chronalDilator';
 
-export type SeasonType = 'Spring' | 'Summer' | 'Autumn' | 'Winter';
+export type DimensionType = 'EarthC137' | 'Froopyland' | 'Citadel' | 'Gazorpazorp' | 'Cronenberg';
 
 export interface Kitten {
   id: string;
@@ -72,7 +80,7 @@ export interface GameLogMessage {
   id: string;
   time: string;
   text: string;
-  type: 'info' | 'success' | 'warn' | 'season' | 'death';
+  type: 'info' | 'success' | 'warn' | 'dimension' | 'death';
 }
 
 export interface ActiveCertificateBoost {
@@ -104,12 +112,14 @@ export interface GameState {
     happiness: number; // percentage (e.g. 100)
   };
   
-  // Season configuration
-  season: {
-    current: SeasonType;
-    daysPassed: number;
-    totalDays: number;
-  };
+  // Current dimension for hopping
+  currentDimension: DimensionType;
+  
+  // Seasonal Calendar System
+  year: number;
+  season: 'spring' | 'summer' | 'autumn' | 'winter';
+  day: number;
+  dayProgress: number;
 
   // Portal Crafting & Morty Certificates
   activeCertificates?: ActiveCertificateBoost[];
@@ -126,6 +136,8 @@ export interface GameState {
     village: boolean;
     workshop: boolean;
     culture: boolean;
+    darkMatter: boolean;
+    fluid: boolean;
   };
   
   // Game settings
@@ -134,7 +146,7 @@ export interface GameState {
   lastTick: number;
   logs: GameLogMessage[];
   theme: 'dark' | 'light' | 'trevor';
-  buyMultiplier: 1 | 5 | 25;
+  buyMultiplier: 1 | 5 | 'max';
   insaneMode: boolean;
   density: 'compact' | 'relaxed';
   activeAnomaly: {
@@ -149,6 +161,7 @@ export interface GameState {
   autoBuild: {
     pasture: boolean;
     barn: boolean;
+    catnipField: boolean;
   };
   
   // Prestige
@@ -161,8 +174,7 @@ export interface GameState {
   // Actions
   tick: (deltaSeconds: number) => void;
   gatherCatnip: (multiplier?: number) => void;
-  refineResource: (craftType: 'wood' | 'beam' | 'slab' | 'plate' | 'parchment', amount?: number) => void;
-  buyBuilding: (type: BuildingType, quantity?: number) => void;
+  buyBuilding: (type: BuildingType, quantity?: number | 'max') => void;
   assignJob: (kittenId: string, job: JobType | 'unemployed') => void;
   assignJobsMultiple: (kittenIds: string[], job: JobType | 'unemployed') => void;
   autoAssignAll: (job: JobType) => void;
@@ -173,14 +185,15 @@ export interface GameState {
   forceAddKitten: () => void;
   portalReset: () => void;
   addLog: (text: string, type?: GameLogMessage['type']) => void;
+  hardReset: () => void;
   setGameSpeed: (speed: number) => void;
   toggleSound: () => void;
   setTheme: (theme: 'dark' | 'light' | 'trevor') => void;
-  setBuyMultiplier: (multiplier: 1 | 5 | 25) => void;
+  setBuyMultiplier: (multiplier: 1 | 5 | 'max') => void;
   synthesizeCertificate: (certificateType: 'bronze' | 'silver' | 'gold' | 'infinite') => void;
   toggleInsaneMode: () => void;
   setDensity: (density: 'compact' | 'relaxed') => void;
   defuseAnomalyClick: () => void;
   defuseAnomalyInstant: () => void;
-  toggleAutoBuild: (type: 'pasture' | 'barn') => void;
+  toggleAutoBuild: (type: 'pasture' | 'barn' | 'catnipField') => void;
 }

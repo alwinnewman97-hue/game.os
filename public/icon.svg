@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient: Subtle Dark Cocoa to Pitch Black -->
+    <!-- Background Gradient: Rich Espresso to Cocoa Charcoal -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1c1917" />
-      <stop offset="40%" stop-color="#121110" />
-      <stop offset="100%" stop-color="#0a0909" />
+      <stop offset="0%" stop-color="#242120" />
+      <stop offset="40%" stop-color="#1a1817" />
+      <stop offset="100%" stop-color="#121110" />
     </linearGradient>
 
-    <!-- Glowing Green Portal Core Gradient -->
+    <!-- Glowing Amber Portal Core Gradient -->
     <radialGradient id="portalCore" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
-      <stop offset="15%" stop-color="#d1ffd0" stop-opacity="1" />
-      <stop offset="45%" stop-color="#39ff14" stop-opacity="0.9" />
-      <stop offset="75%" stop-color="#05b144" stop-opacity="0.7" />
-      <stop offset="95%" stop-color="#0e3a15" stop-opacity="0.4" />
+      <stop offset="15%" stop-color="#fff2d4" stop-opacity="1" />
+      <stop offset="45%" stop-color="#dfa15b" stop-opacity="0.9" />
+      <stop offset="75%" stop-color="#8a5e3c" stop-opacity="0.7" />
+      <stop offset="95%" stop-color="#312c2a" stop-opacity="0.4" />
       <stop offset="100%" stop-color="#121110" stop-opacity="0" />
     </radialGradient>
 
@@ -24,11 +24,11 @@
       <stop offset="100%" stop-color="#e6dac6" />
     </linearGradient>
 
-    <!-- Neon Lime Portal Swirl Outline -->
+    <!-- Neon Amber Portal Swirl Outline -->
     <linearGradient id="neonGlow" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#05b144" />
-      <stop offset="50%" stop-color="#39ff14" />
-      <stop offset="100%" stop-color="#d1ffd0" />
+      <stop offset="0%" stop-color="#8a5e3c" />
+      <stop offset="50%" stop-color="#dfa15b" />
+      <stop offset="100%" stop-color="#faf6f0" />
     </linearGradient>
 
     <!-- High-end Glow Filter -->
@@ -61,7 +61,7 @@
   <circle cx="256" cy="256" r="170" fill="url(#portalCore)" filter="url(#ultraGlow)" />
 
   <!-- Portal Swirling Spikes/Energy Vectors (Polished Geometric Spirograph) -->
-  <g stroke="#39ff14" stroke-width="2.5" fill="none" opacity="0.75">
+  <g stroke="#dfa15b" stroke-width="2.5" fill="none" opacity="0.75">
     <!-- Starburst Spirograph -->
     <path d="M 256,86 C 270,170 340,170 426,256 C 340,270 340,340 256,426 C 242,340 172,340 86,256 C 172,242 172,172 256,86 Z" stroke-dasharray="4 4" />
     <!-- Secondary Intersecting Spirograph -->
@@ -71,9 +71,9 @@
   <!-- Glowing Energy Bubbles / Micro-dimensions -->
   <g fill="#ffffff" opacity="0.8">
     <circle cx="210" cy="160" r="9" filter="url(#ultraGlow)" />
-    <circle cx="310" cy="340" r="6" fill="#39ff14" />
+    <circle cx="310" cy="340" r="6" fill="#dfa15b" />
     <circle cx="360" cy="190" r="11" filter="url(#ultraGlow)" />
-    <circle cx="150" cy="270" r="7" fill="#39ff14" />
+    <circle cx="150" cy="270" r="7" fill="#dfa15b" />
     <circle cx="280" cy="130" r="5" fill="#ffffff" />
     <circle cx="180" cy="350" r="10" filter="url(#ultraGlow)" />
   </g>
@@ -84,7 +84,7 @@
     <path d="M 256,140 L 290,205 L 362,205 L 310,256 L 335,325 L 256,285 L 177,325 L 202,256 L 150,205 L 222,205 Z" fill="#121110" stroke="url(#sandGlow)" stroke-width="5" stroke-linejoin="round" />
 
     <!-- inner Glowing Core (Portal Portal Gun Energy Well) -->
-    <circle cx="256" cy="245" r="32" fill="#1c1917" stroke="#39ff14" stroke-width="2" />
+    <circle cx="256" cy="245" r="32" fill="#1c1917" stroke="#dfa15b" stroke-width="2" />
     <circle cx="256" cy="245" r="12" fill="#ffffff" filter="url(#ultraGlow)" />
 
     <!-- Stylized "Citadel Tower / Portal Spire" Overlay -->
@@ -94,5 +94,5 @@
 
   <!-- Tiny floating orbital rings for atomic sci-fi feeling -->
   <ellipse cx="256" cy="256" rx="220" ry="80" fill="none" stroke="url(#sandGlow)" stroke-width="2" stroke-dasharray="10 15" transform="rotate(-30 256 256)" opacity="0.25" />
-  <ellipse cx="256" cy="256" rx="220" ry="80" fill="none" stroke="#39ff14" stroke-width="1.5" stroke-dasharray="15 20" transform="rotate(30 256 256)" opacity="0.2" />
+  <ellipse cx="256" cy="256" rx="220" ry="80" fill="none" stroke="#dfa15b" stroke-width="1.5" stroke-dasharray="15 20" transform="rotate(30 256 256)" opacity="0.2" />
 </svg>
