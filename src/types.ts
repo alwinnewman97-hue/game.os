@@ -174,6 +174,7 @@ export interface GameState {
   essentialJobs: Record<JobType, boolean>;
   smartAssignRatios: Record<JobType, number>;
   smartAssignMode: 'dynamic' | 'custom';
+  jobPresets: Record<string, Record<JobType, number>>;
 
   // Portal Upgrades state
   portalUpgrades: Record<PortalUpgradeType, number>;
@@ -206,4 +207,7 @@ export interface GameState {
   toggleEssentialJob: (job: JobType) => void;
   setSmartAssignRatio: (job: JobType, ratio: number) => void;
   setSmartAssignMode: (mode: 'dynamic' | 'custom') => void;
+  saveJobPreset: (name: string) => void;
+  loadJobPreset: (name: string) => void;
+  deleteJobPreset: (name: string) => void;
 }

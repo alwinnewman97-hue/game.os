@@ -28,6 +28,7 @@ export default function TownTab({ store }: TownTabProps) {
   const maxKittens = store.village?.maxKittens || 0;
   const isCompact = store.density === 'compact';
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [presetName, setPresetName] = React.useState('');
 
   const jobCounts: Record<JobType | 'unemployed', number> = {
     farmer: 0,
@@ -94,6 +95,9 @@ export default function TownTab({ store }: TownTabProps) {
       if (jobId === 'darkMatterScientist' && !store.unlocks.darkMatter) return;
       if (jobId === 'fluidEngineer' && !store.unlocks.fluid) return;
 
+      // Skip jobs marked as essential/locked from auto-rebalancing
+      if (store.essentialJobs?.[jobId]) return;
+
       let score = 0;
       if (store.smartAssignMode === 'custom') {
         score = store.smartAssignRatios?.[jobId] ?? 1;
@@ -131,6 +135,8 @@ export default function TownTab({ store }: TownTabProps) {
 
       availableJobs.push({ job: jobId, score });
     });
+
+    if (availableJobs.length === 0) return;
 
     const totalScore = availableJobs.reduce((sum, j) => sum + j.score, 0);
 
@@ -219,6 +225,60 @@ export default function TownTab({ store }: TownTabProps) {
       runSmartAssign(allIdleKittens);
     }
     if (store.soundEnabled) playClickSound('success');
+  };
+
+  const applyPredefinedPreset = (type: 'balanced' | 'science' | 'production') => {
+    let ratios: Record<JobType, number> = { ...BASE_SMART_ASSIGN_RATIOS };
+    
+    if (type === 'balanced') {
+      ratios = {
+        farmer: 1,
+        woodcutter: 1,
+        scholar: 1,
+        miner: 1,
+        priest: 1,
+        darkMatterScientist: 1,
+        fluidEngineer: 1
+      };
+    } else if (type === 'science') {
+      ratios = {
+        farmer: 1,
+        woodcutter: 1,
+        scholar: 5,
+        miner: 1,
+        priest: 2,
+        darkMatterScientist: 4,
+        fluidEngineer: 1
+      };
+    } else if (type === 'production') {
+      ratios = {
+        farmer: 2,
+        woodcutter: 4,
+        scholar: 1,
+        miner: 4,
+        priest: 1,
+        darkMatterScientist: 1,
+        fluidEngineer: 4
+      };
+    }
+
+    // Set ratios one by one since we don't have setAllRatios (or we could add it)
+    // Actually, I can just use a loop
+    Object.entries(ratios).forEach(([job, val]) => {
+      store.setSmartAssignRatio(job as JobType, val);
+    });
+    store.setSmartAssignMode('custom');
+    if (store.soundEnabled) playClickSound('success');
+  };
+
+  const BASE_SMART_ASSIGN_RATIOS: Record<JobType, number> = {
+    farmer: 1,
+    woodcutter: 1,
+    scholar: 1,
+    miner: 1,
+    priest: 1,
+    darkMatterScientist: 1,
+    fluidEngineer: 1
   };
 
   return (
@@ -348,6 +408,82 @@ export default function TownTab({ store }: TownTabProps) {
                     ? '🧬 Automatically balances and assigns clones based on real-time resource deficits and storage capacities to prevent wasted production.'
                     : '📐 Allocates unemployed clones strictly in proportion to the custom job weights you configure below.'}
                 </p>
+              </div>
+
+              {/* JOB PRESETS */}
+              <div className="flex flex-col gap-2 pb-2 border-b theme-border">
+                <span className="text-[10px] uppercase tracking-wider font-bold theme-text-muted">Job Presets</span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => applyPredefinedPreset('balanced')}
+                    className="flex flex-col items-center gap-1 p-2 rounded-lg border theme-border theme-bg-hover hover:theme-text-main transition-all cursor-pointer"
+                  >
+                    <Users size={14} className="text-emerald-400" />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Balanced</span>
+                  </button>
+                  <button
+                    onClick={() => applyPredefinedPreset('science')}
+                    className="flex flex-col items-center gap-1 p-2 rounded-lg border theme-border theme-bg-hover hover:theme-text-main transition-all cursor-pointer"
+                  >
+                    <Sparkles size={14} className="text-purple-400" />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">High Science</span>
+                  </button>
+                  <button
+                    onClick={() => applyPredefinedPreset('production')}
+                    className="flex flex-col items-center gap-1 p-2 rounded-lg border theme-border theme-bg-hover hover:theme-text-main transition-all cursor-pointer"
+                  >
+                    <RefreshCw size={14} className="text-amber-400" />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Production</span>
+                  </button>
+                </div>
+
+                {/* CUSTOM PRESETS */}
+                <div className="mt-2 flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Preset Name..."
+                      value={presetName}
+                      onChange={(e) => setPresetName(e.target.value)}
+                      className="flex-1 theme-bg-app border theme-border rounded-md px-2 py-1 text-[10px] theme-text-main focus:outline-none focus:border-cyan-500/50"
+                    />
+                    <button
+                      disabled={!presetName.trim()}
+                      onClick={() => {
+                        store.saveJobPreset(presetName.trim());
+                        setPresetName('');
+                      }}
+                      className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                        presetName.trim()
+                          ? 'bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/30 cursor-pointer'
+                          : 'theme-bg-panel theme-text-muted border theme-border opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      Save
+                    </button>
+                  </div>
+
+                  {store.jobPresets && Object.keys(store.jobPresets).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {Object.keys(store.jobPresets).map(name => (
+                        <div key={name} className="flex items-center gap-1 px-2 py-1 bg-slate-900/50 border theme-border rounded-md group">
+                          <button
+                            onClick={() => store.loadJobPreset(name)}
+                            className="text-[9px] font-semibold theme-text-main hover:text-cyan-400 transition-colors cursor-pointer"
+                          >
+                            {name}
+                          </button>
+                          <button
+                            onClick={() => store.deleteJobPreset(name)}
+                            className="text-slate-600 hover:text-red-400 transition-colors cursor-pointer ml-1"
+                          >
+                            <Minus size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* TARGET RATIOS GRID */}

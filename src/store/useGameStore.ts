@@ -273,6 +273,7 @@ export const useGameStore = create<GameState>()(
         fluxAccelerator: 0,
         chronalDilator: 0,
       },
+      jobPresets: {},
 
       addLog: (text: string, type: GameLogMessage['type'] = 'info') => {
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1570,7 +1571,35 @@ export const useGameStore = create<GameState>()(
         };
       }),
 
-      setSmartAssignMode: (mode) => set({ smartAssignMode: mode })
+      setSmartAssignMode: (mode) => set({ smartAssignMode: mode }),
+
+      saveJobPreset: (name: string) => set(state => {
+        const ratios = { ...state.smartAssignRatios };
+        state.addLog(`Configuration saved: "${name}" Job Preset.`, 'success');
+        return {
+          jobPresets: {
+            ...state.jobPresets,
+            [name]: ratios
+          }
+        };
+      }),
+
+      loadJobPreset: (name: string) => set(state => {
+        const preset = state.jobPresets[name];
+        if (!preset) return state;
+        state.addLog(`Configuration loaded: "${name}" Job Preset. Mode set to Custom Ratios.`, 'success');
+        return {
+          smartAssignRatios: { ...preset },
+          smartAssignMode: 'custom'
+        };
+      }),
+
+      deleteJobPreset: (name: string) => set(state => {
+        const presets = { ...state.jobPresets };
+        delete presets[name];
+        state.addLog(`Preset "${name}" has been purged from memory.`, 'info');
+        return { jobPresets: presets };
+      })
     }),
     {
       name: 'rick-and-morty-incremental-storage',
@@ -1687,6 +1716,8 @@ export const useGameStore = create<GameState>()(
           ...(persistedState.portalUpgrades || {})
         };
 
+        const mergedJobPresets = persistedState.jobPresets || {};
+
         return {
           ...currentState,
           ...persistedState,
@@ -1704,6 +1735,7 @@ export const useGameStore = create<GameState>()(
           craftedCertificatesCount: mergedCraftedCertificatesCount,
           achievements: mergedAchievements,
           portalUpgrades: mergedPortalUpgrades,
+          jobPresets: mergedJobPresets,
           theme: persistedState.theme === 'light' ? 'light' : 'dark',
           density: (persistedState.density === 'compact' || persistedState.density === 'relaxed') ? persistedState.density : 'relaxed',
           buyMultiplier: (persistedState.buyMultiplier === 1 || persistedState.buyMultiplier === 5 || persistedState.buyMultiplier === 'max') 
