@@ -227,7 +227,7 @@ export default function ResourcePanel({
             </div>
           );
         })()}
-        <div className="flex items-center theme-bg-card rounded-lg border theme-border p-0.5 backdrop-blur-md w-max self-center xl:self-start">
+        <div className="flex items-center theme-bg-card rounded-lg border theme-border p-1 backdrop-blur-md w-max self-center xl:self-start">
           {([1, 5, "max"] as const).map((m) => (
             <button
               key={m}
@@ -235,8 +235,10 @@ export default function ResourcePanel({
                 store.setBuyMultiplier(m);
                 if (store.soundEnabled) playClickSound("click");
               }}
-              className={`text-[9px] sm:text-[10px] font-mono font-bold rounded-md transition-all cursor-pointer ${
-                isCompact ? "py-0.5 px-1.5 sm:px-2 text-[8px] sm:text-[9px]" : "py-1 px-2 sm:px-2.5"
+              className={`text-[10px] sm:text-[10px] font-mono font-bold rounded-md transition-all cursor-pointer ${
+                isCompact 
+                  ? "py-1.5 px-3 sm:py-0.5 sm:px-1.5 text-[10px] sm:text-[9px]" 
+                  : "py-2 px-3.5 sm:py-1 sm:px-2"
               } ${
                 (store.buyMultiplier || 1) === m
                   ? "theme-text-main theme-bg-hover shadow-sm"
@@ -260,8 +262,8 @@ export default function ResourcePanel({
             onClick={handleManualGather}
             className={`theme-bg-card hover:theme-bg-hover border theme-border flex flex-col items-center justify-center transition-all cursor-pointer shadow-sm ${
               isCompact
-                ? "px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg gap-1 text-[8px] sm:text-2xs min-w-[55px] sm:min-w-[62px]"
-                : "px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl gap-1 sm:gap-1.5 text-xs min-w-[65px] sm:min-w-[72px]"
+                ? "px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 rounded-lg gap-1 text-[9px] sm:text-2xs min-w-[65px] sm:min-w-[62px]"
+                : "px-4.5 py-3 sm:px-4 sm:py-2 rounded-xl gap-1 sm:gap-1.5 text-xs min-w-[75px] sm:min-w-[72px]"
             }`}
           >
             <Leaf size={isCompact ? 10 : 13} className="text-emerald-400" />
@@ -396,7 +398,7 @@ export default function ResourcePanel({
                     </button>
                     
                     {isDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-2 p-3 theme-bg-app border theme-border rounded-xl shadow-xl z-50 flex gap-4 xl:gap-6 min-w-max border-cyan-500/20 backdrop-blur-md">
+                      <div className="absolute top-full right-0 mt-2 p-3 theme-bg-app border theme-border rounded-xl shadow-xl z-50 flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 max-w-[calc(100vw-3rem)] sm:max-w-none border-cyan-500/20 backdrop-blur-md">
                         {dropdownResources.map(renderResource)}
                       </div>
                     )}

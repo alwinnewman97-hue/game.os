@@ -376,8 +376,48 @@ export default function App() {
     }
   };
 
+  const getSeasonalGradient = (s: string, theme: string) => {
+    const isLight = theme === 'light';
+    switch (s) {
+      case "spring":
+        return isLight
+          ? "radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05) 0%, transparent 70%)"
+          : "radial-gradient(ellipse at top, rgba(16, 185, 129, 0.07) 0%, transparent 70%), radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.03) 0%, transparent 50%)";
+      case "summer":
+        return isLight
+          ? "radial-gradient(ellipse at top, rgba(245, 158, 11, 0.05) 0%, transparent 70%)"
+          : "radial-gradient(ellipse at top, rgba(245, 158, 11, 0.07) 0%, transparent 70%), radial-gradient(circle at 10% 20%, rgba(234, 179, 8, 0.03) 0%, transparent 50%)";
+      case "autumn":
+        return isLight
+          ? "radial-gradient(ellipse at top, rgba(249, 115, 22, 0.06) 0%, transparent 70%)"
+          : "radial-gradient(ellipse at top, rgba(249, 115, 22, 0.08) 0%, transparent 70%), radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.03) 0%, transparent 50%)";
+      case "winter":
+        return isLight
+          ? "radial-gradient(ellipse at top, rgba(14, 165, 233, 0.05) 0%, transparent 70%)"
+          : "radial-gradient(ellipse at top, rgba(14, 165, 233, 0.08) 0%, transparent 70%), radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 50%)";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] overflow-hidden theme-bg-app theme-text-main antialiased font-sans max-w-full relative selection:theme-bg-hover selection:theme-text-main">
+      {/* IMMERSIVE SEASONAL BACKGROUND OVERLAY */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={season + "-" + store.theme}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            className="absolute inset-0"
+            style={{
+              backgroundImage: getSeasonalGradient(season, store.theme),
+            }}
+          />
+        </AnimatePresence>
+      </div>
       {/* CINEMATIC STARTUP SPLASH SCREEN WITH INTERACTIVE IMMERSIVE LAUNCHER */}
       <AnimatePresence mode="wait">
         {showSplash && (
@@ -441,7 +481,7 @@ export default function App() {
           <div className="flex flex-row md:flex-col gap-1 md:gap-1.5 w-full justify-around md:justify-start px-1 md:px-4">
             <button
               onClick={() => handleTabChange("bonfire")}
-              className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "bonfire"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -466,7 +506,7 @@ export default function App() {
             {store.unlocks.village && (
               <button
                 onClick={() => handleTabChange("town")}
-                className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === "town"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
@@ -492,7 +532,7 @@ export default function App() {
             {store.unlocks.science && (
               <button
                 onClick={() => handleTabChange("science")}
-                className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === "science"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
@@ -518,7 +558,7 @@ export default function App() {
             {store.unlocks.workshop && (
               <button
                 onClick={() => handleTabChange("upgrades")}
-                className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === "upgrades"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
@@ -543,7 +583,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("achievements")}
-              className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "achievements"
                   ? "portal-tab-btn-active scale-100"
                   : "text-[#39ff14]/90 scale-95"
@@ -567,7 +607,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("settings")}
-              className={`p-2 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "settings"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -764,7 +804,18 @@ export default function App() {
             store.density === "compact" ? "px-4 sm:px-6" : "px-5 sm:px-10"
           }`}
         >
-          {currentTabComponent()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="w-full"
+            >
+              {currentTabComponent()}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </div>

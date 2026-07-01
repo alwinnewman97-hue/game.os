@@ -662,20 +662,20 @@ export default function TownTab({ store }: TownTabProps) {
 
       {/* INDIVIDUAL KITTENS POPULATION MATRIX */}
       {kittens.length > 0 && (
-        <div className="mt-12 mx-2 sm:mx-6 select-none animate-fadeIn">
-          <span className="text-[10px] uppercase font-bold theme-text-muted tracking-widest leading-none block mb-6">Portal Clone Directory</span>
+        <div className="mt-10 mx-2 sm:mx-6 select-none animate-fadeIn">
+          <span className="text-[10px] uppercase font-bold theme-text-muted tracking-widest leading-none block mb-4">Portal Clone Directory</span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fadeIn">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 animate-fadeIn">
             {kittens.map((kitten) => (
               <div 
                 key={kitten.id}
-                className="p-4 border theme-border hover:theme-border-active transition-colors theme-bg-card flex flex-col justify-between gap-4"
+                className="p-2.5 sm:p-4 border theme-border hover:theme-border-active transition-all theme-bg-card flex flex-row sm:flex-col items-center sm:items-stretch justify-between gap-3 sm:gap-4 rounded-xl"
               >
-                <div className="min-w-0">
-                  <span className="font-bold text-sm tracking-wide theme-text-main block truncate leading-tight mb-1.5">
+                <div className="min-w-0 flex-1 sm:flex-initial">
+                  <span className="font-bold text-xs sm:text-sm tracking-wide theme-text-main block truncate leading-tight mb-0.5 sm:mb-1.5">
                     {kitten.name} {kitten.surname}
                   </span>
-                  <span className="text-[10px] theme-text-muted font-mono block uppercase">
+                  <span className="text-[9px] sm:text-[10px] theme-text-muted font-mono block uppercase">
                     GEN {kitten.level} • {kitten.trait || 'Normal'}
                   </span>
                 </div>
@@ -684,25 +684,25 @@ export default function TownTab({ store }: TownTabProps) {
                 <select
                   value={kitten.job}
                   onChange={(e) => handleAssignJob(kitten.id, e.target.value as JobType | 'unemployed')}
-                  className="theme-bg-app border theme-border theme-text-main text-[11px] px-3 py-2 shrink-0 focus:outline-none focus:theme-border cursor-pointer font-sans"
+                  className="theme-bg-app border theme-border theme-text-main text-[11px] px-2.5 py-1.5 sm:px-3 sm:py-2 shrink-0 focus:outline-none focus:theme-border cursor-pointer font-sans rounded-md max-w-[130px] xs:max-w-[160px] sm:max-w-none text-right sm:text-left font-semibold"
                 >
                   <option value="unemployed">💤 Idle</option>
-                  <option value="farmer">🌱 Mega-Seed Cultivator</option>
-                  <option value="woodcutter">⚡ Plutonium Harvester</option>
+                  <option value="farmer">🌱 Mega Seeds</option>
+                  <option value="woodcutter">⚡ Plutonium</option>
                   {store.buildings.library > 0 && (
-                    <option value="scholar">🔬 Lab Assistant</option>
+                    <option value="scholar">🔬 Portal Tech</option>
                   )}
                   {store.unlocks.minerals && (
-                    <option value="miner">⛏️ Crystal Digger</option>
+                    <option value="miner">⛏️ Crystals</option>
                   )}
                   {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
-                    <option value="priest">🔊 Schwifty Chanter</option>
+                    <option value="priest">🔊 Schwifty Vibes</option>
                   )}
                   {store.unlocks.darkMatter && (
-                    <option value="darkMatterScientist">🌑 Dark Matter Scientist</option>
+                    <option value="darkMatterScientist">🌑 Dark Matter</option>
                   )}
                   {store.unlocks.fluid && (
-                    <option value="fluidEngineer">🧪 Fluid Engineer</option>
+                    <option value="fluidEngineer">🧪 Portal Fluid</option>
                   )}
                 </select>
               </div>
