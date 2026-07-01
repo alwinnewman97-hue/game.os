@@ -1,5 +1,5 @@
 {
-  "name": "Kittens Incremental",
+  "name": "Citadel Incremental",
   "description": "A fully polished Rick & Morty themed incremental game based on Kittens Incremental. Grow portal seeds, clone Mortys, research technology, and expand the Citadel with full progressive web app (PWA) offline compatibility.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -154,7 +154,10 @@ export default function SettingsTab({ store }: SettingsTabProps) {
               <Zap className="text-yellow-400 drop-shadow-sm" size={16} />
               Portal Flux Points (Dimensional Prestige)
             </div>
-            <div className="theme-text-muted text-sm">Global production multiplier: +{store.portalFlux * 10}%</div>
+            <div className="theme-text-muted text-sm">Global flux production multiplier: +{store.portalFlux * 10}%</div>
+            {(store.portalUpgrades?.dimensionalAmplifier ?? 0) > 0 && (
+              <div className="theme-text-muted text-sm text-cyan-400">Dimensional Amplifier Bonus: +{(store.portalUpgrades?.dimensionalAmplifier ?? 0) * 15}%</div>
+            )}
             {store.portalResets > 0 && (
                <div className="theme-text-muted text-xs mt-1 font-semibold">Times Reset: {store.portalResets}</div>
             )}

@@ -85,7 +85,7 @@ export const CERTIFICATES: Record<string, CertificateDef> = {
   }
 };
 
-export const DAY_DURATION_IN_GAME_SEC = 2700; // 1 real-life day = 1 in-game year (160 days * 2700 units)
+export const DAY_DURATION_IN_GAME_SEC = 5; // 1 in-game day = 5 real-life seconds
 
 const BASE_RESOURCES: Record<ResourceType, { amount: number; max: number }> = {
   catnip: { amount: 50, max: 2000 },
@@ -339,37 +339,29 @@ export const useGameStore = create<GameState>()(
         // ----------------------------------------
         // SEASONAL CALENDAR SYSTEM
         // ----------------------------------------
-        // ----------------------------------------
-        // CALENDAR & SEASONAL LOGIC (Synced with System Time)
-        // ----------------------------------------
-        const nowInSeconds = Date.now() / 1000;
-        
-        // Use a fixed epoch for year 1 to make it a bit more reasonable than Year 4000+
-        // Jan 1st 2024 is approximately 1704067200
-        const EPOCH_OFFSET_SEC = 1704067200; 
-        const secondsSinceEpoch = Math.max(0, nowInSeconds - EPOCH_OFFSET_SEC);
-        const absoluteDaySinceEpoch = Math.floor(secondsSinceEpoch / DAY_DURATION_IN_GAME_SEC);
-        
-        const year = Math.floor(absoluteDaySinceEpoch / 160) + 1;
-        const dayOfYear = absoluteDaySinceEpoch % 160;
+        let dayProgress = (state.dayProgress !== undefined ? state.dayProgress : 0) + effectiveDelta;
+        let day = state.day !== undefined ? state.day : 1;
+        let season = state.season !== undefined ? state.season : 'spring';
+        let year = state.year !== undefined ? state.year : 1;
+
         const seasonSequence: ('spring' | 'summer' | 'autumn' | 'winter')[] = ['spring', 'summer', 'autumn', 'winter'];
-        const seasonIdx = Math.floor(dayOfYear / 40);
-        const season = seasonSequence[seasonIdx];
-        const day = (dayOfYear % 40) + 1;
-        const dayProgress = secondsSinceEpoch % DAY_DURATION_IN_GAME_SEC;
-
         const seasonalLogs: GameLogMessage[] = [];
-        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        // Detect transitions between ticks
-        const prevDay = state.day || 1;
-        const prevSeason = state.season || 'spring';
-        const prevYear = state.year || 1;
-
-        if (day !== prevDay || season !== prevSeason || year !== prevYear) {
-          // A transition occurred
-          if (season !== prevSeason) {
+        while (dayProgress >= DAY_DURATION_IN_GAME_SEC) {
+          dayProgress -= DAY_DURATION_IN_GAME_SEC;
+          const prevDay = day;
+          const prevSeason = season;
+          
+          day += 1;
+          if (day > 40) {
+            day = 1;
+            const currentIdx = seasonSequence.indexOf(season);
+            const nextIdx = (currentIdx + 1) % 4;
+            season = seasonSequence[nextIdx];
+            
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             if (season === 'spring') {
+              year += 1;
               seasonalLogs.push({
                 id: `season-spring-${year}-${Math.random()}`,
                 time: timeStr,
@@ -392,57 +384,59 @@ export const useGameStore = create<GameState>()(
             }
           }
 
-          // Seasonal festival / event triggers (only log if we just hit the exact day)
-          if (season === 'spring' && day === 10 && (prevDay !== 10 || prevSeason !== 'spring')) {
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          // Seasonal festival / event triggers
+          if (season === 'spring' && day === 10) {
             seasonalLogs.push({
               id: `fest-spring-start-${Math.random()}`,
               time: timeStr,
               text: `🌸 Festival Started: "Citadel Spring Break"! Mortys are ecstatic! (+20% Happiness, +15% Job Speed for 5 days)`,
               type: 'success'
             });
-          } else if (season === 'spring' && day === 15 && (prevDay !== 15 || prevSeason !== 'spring')) {
+          } else if (season === 'spring' && day === 15) {
             seasonalLogs.push({
               id: `fest-spring-end-${Math.random()}`,
               time: timeStr,
               text: `🌸 "Citadel Spring Break" festival has ended. Back to research!`,
               type: 'info'
             });
-          } else if (season === 'summer' && day === 20 && (prevDay !== 20 || prevSeason !== 'summer')) {
+          } else if (season === 'summer' && day === 20) {
             seasonalLogs.push({
               id: `fest-summer-start-${Math.random()}`,
               time: timeStr,
               text: `🔥 Event Started: "Solar Purge"! Intense radiation doubles Plutonium scrap yield, but warning of spatial anomalies!`,
               type: 'warn'
             });
-          } else if (season === 'summer' && day === 23 && (prevDay !== 23 || prevSeason !== 'summer')) {
+          } else if (season === 'summer' && day === 23) {
             seasonalLogs.push({
               id: `fest-summer-end-${Math.random()}`,
               time: timeStr,
               text: `🔥 "Solar Purge" radiation has subsided. Plutonium scrap rates return to normal.`,
               type: 'info'
             });
-          } else if (season === 'autumn' && day === 15 && (prevDay !== 15 || prevSeason !== 'autumn')) {
+          } else if (season === 'autumn' && day === 15) {
             seasonalLogs.push({
               id: `fest-autumn-start-${Math.random()}`,
               time: timeStr,
               text: `🍁 Event Started: "The Great Seed Harvest"! Botanical clones gather +50% extra Mega Seeds!`,
               type: 'success'
             });
-          } else if (season === 'autumn' && day === 20 && (prevDay !== 20 || prevSeason !== 'autumn')) {
+          } else if (season === 'autumn' && day === 20) {
             seasonalLogs.push({
               id: `fest-autumn-end-${Math.random()}`,
               time: timeStr,
               text: `🍁 "The Great Seed Harvest" has concluded.`,
               type: 'info'
             });
-          } else if (season === 'winter' && day === 25 && (prevDay !== 25 || prevSeason !== 'winter')) {
+          } else if (season === 'winter' && day === 25) {
             seasonalLogs.push({
               id: `fest-winter-start-${Math.random()}`,
               time: timeStr,
               text: `🎁 Holiday Event: "Cromulon Gift-giving"! The giant heads are pleased. +30% Science and Culture generation!`,
               type: 'success'
             });
-          } else if (season === 'winter' && day === 30 && (prevDay !== 30 || prevSeason !== 'winter')) {
+          } else if (season === 'winter' && day === 30) {
             seasonalLogs.push({
               id: `fest-winter-end-${Math.random()}`,
               time: timeStr,
@@ -655,7 +649,7 @@ export const useGameStore = create<GameState>()(
         // FARMING: boost from agriculture, season modifier, and aqueduct multiplier
         const farmerEffBonus = state.researched.agriculture ? 1.20 : 1.0;
         const agricultureGreenhouseBonus = state.researched.agriculture ? 1.25 : 1.0;
-        let dimensionModifier = state.researched.calendar ? DIMENSIONS_DATA[currentDimension].catnipModifier : 1.0;
+        let dimensionModifier = DIMENSIONS_DATA[currentDimension].catnipModifier;
         
         if (state.insaneMode && currentDimension === 'Froopyland') {
           dimensionModifier = state.upgrades.portalHeaters ? 0.35 : 0.05;
@@ -675,7 +669,7 @@ export const useGameStore = create<GameState>()(
         }
 
         // Base field production is passive
-        const fieldsPassiveRate = state.buildings.catnipField * 0.63 * dimensionModifier * aqueductBoost * agricultureGreenhouseBonus * seasonCropMultiplier;
+        const fieldsPassiveRate = state.buildings.catnipField * 0.63 * dimensionModifier * aqueductBoost * agricultureGreenhouseBonus * seasonCropMultiplier * dimensionalMultiplier * portalFluxMultiplier;
         const farmerRate = jobStrengths.farmer * 5.0 * farmerEffBonus * dimensionModifier * productionMultiplier * seasonCropMultiplier;
         let catnipRate = fieldsPassiveRate + farmerRate;
 
@@ -733,7 +727,7 @@ export const useGameStore = create<GameState>()(
         const miningMinerBonus = state.researched.mining ? 1.20 : 1.0;
         const minerBase = jobStrengths.miner * 0.18 * efficiencyFactor * productionMultiplier * miningMinerBonus * springBreakFactor;
         // Mine adds slightly passive mineral gain as well
-        let mineralsRate = minerBase + (state.buildings.mine * 0.05 * miningMinerBonus);
+        let mineralsRate = minerBase + (state.buildings.mine * 0.05 * miningMinerBonus * dimensionalMultiplier * portalFluxMultiplier);
 
         // PRIEST (Schwifty Musician) boosted by theology (Cromulon Reverence) research, spring break, and Cromulon gifts
         const theologyPriestBonus = state.researched.theology ? 1.40 : 1.0;
@@ -762,7 +756,7 @@ export const useGameStore = create<GameState>()(
 
         // DARK MATTER SCIENTIST and EXTRACTOR
         const darkMatterScientistRate = (jobStrengths.darkMatterScientist || 0) * 0.05 * efficiencyFactor * productionMultiplier;
-        const darkMatterExtractorRate = state.buildings.darkMatterExtractor * 0.15;
+        const darkMatterExtractorRate = state.buildings.darkMatterExtractor * 0.15 * dimensionalMultiplier * portalFluxMultiplier;
         let darkMatterRate = darkMatterScientistRate + darkMatterExtractorRate;
 
         // PORTAL FLUID ENGINEER and GENERATOR
@@ -1054,9 +1048,15 @@ export const useGameStore = create<GameState>()(
       },
 
       gatherCatnip: (multiplier: number = 1) => set(state => {
-        // Gathering catnip manually is highly customizable
+        // Gathering catnip manually is highly customizable, and is boosted by portal flux and dimensional upgrades!
+        const portalFluxMultiplier = 1 + (state.portalFlux * 0.1);
+        const dimAmplifierLevel = state.portalUpgrades?.dimensionalAmplifier ?? 0;
+        const dimensionalMultiplier = 1 + (dimAmplifierLevel * 0.15);
+        const finalMultiplier = multiplier * portalFluxMultiplier * dimensionalMultiplier;
+        const gainedAmount = Math.max(1, Math.round(1 * finalMultiplier));
+
         const amt = Math.min(
-          state.resources.catnip.amount + (1 * multiplier), 
+          state.resources.catnip.amount + gainedAmount, 
           state.resources.catnip.max
         );
         const unlocks = { ...state.unlocks };
@@ -1392,12 +1392,15 @@ export const useGameStore = create<GameState>()(
         const dimensions: DimensionType[] = ['EarthC137', 'Froopyland', 'Citadel', 'Gazorpazorp', 'Cronenberg'];
         const currentIndex = dimensions.indexOf(state.currentDimension);
         const nextDimension = dimensions[(currentIndex + 1) % dimensions.length];
+        
+        // Ensure portal upgrades persist (prestige values)
+        const preservedUpgrades = JSON.parse(JSON.stringify(state.portalUpgrades || {}));
 
         set({
-          resources: BASE_RESOURCES,
-          buildings: BASE_BUILDINGS,
-          researched: BASE_RESEARCHED,
-          upgrades: BASE_UPGRADES,
+          resources: JSON.parse(JSON.stringify(BASE_RESOURCES)),
+          buildings: JSON.parse(JSON.stringify(BASE_BUILDINGS)),
+          researched: JSON.parse(JSON.stringify(BASE_RESEARCHED)),
+          upgrades: JSON.parse(JSON.stringify(BASE_UPGRADES)),
           year: 1,
           season: 'spring',
           day: 1,
@@ -1426,11 +1429,12 @@ export const useGameStore = create<GameState>()(
           activeCertificates: [],
           craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
           currentDimension: nextDimension,
+          portalUpgrades: preservedUpgrades,
           logs: [
             {
               id: 'reset',
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-              text: `Portal Reset complete! You acquired ${fluxEarned} Portal Flux points. Welcome to a new dimension: ${DIMENSIONS_DATA[nextDimension].name}.`,
+              text: `Portal Reset complete! You acquired ${fluxEarned} Portal Flux points. Welcome to a new dimension: ${DIMENSIONS_DATA[nextDimension].name}. Portal Upgrades Preserved (Amplifier Lv. ${preservedUpgrades.dimensionalAmplifier || 0}).`,
               type: 'success'
             }
           ],

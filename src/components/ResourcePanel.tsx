@@ -17,6 +17,7 @@ import {
   Volume,
   Atom,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { playClickSound, triggerHaptic } from "../utils/audio";
 
 interface ResourcePanelProps {
@@ -42,6 +43,9 @@ export default function ResourcePanel({
   darkMatterRate,
   portalFluidRate,
 }: ResourcePanelProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [floatingTexts, setFloatingTexts] = React.useState<{ id: number; x: number; y: number; text: string }[]>([]);
+
   const formatNumber = (num: number): string => {
     if (num >= 10000) return (num / 1000).toFixed(1) + "K";
     if (num >= 1000) return (num / 1000).toFixed(2) + "K";
@@ -74,10 +78,33 @@ export default function ResourcePanel({
     }
   };
 
-  const handleManualGather = () => {
+  const handleManualGather = (e: React.MouseEvent) => {
     triggerHaptic("click");
     if (store.soundEnabled) playClickSound("click");
+
+    const portalFluxMultiplier = 1 + ((store.portalFlux || 0) * 0.1);
+    const dimAmplifierLevel = store.portalUpgrades?.dimensionalAmplifier ?? 0;
+    const dimensionalMultiplier = 1 + (dimAmplifierLevel * 0.15);
+    const baseGain = Math.max(1, Math.round(1 * portalFluxMultiplier * dimensionalMultiplier));
+
+    const catnipAmount = store.resources.catnip?.amount ?? 0;
+    const catnipMax = store.resources.catnip?.max ?? 0;
+    const spaceLeft = Math.max(0, catnipMax - catnipAmount);
+    const gained = Math.min(baseGain, spaceLeft);
+
     store.gatherCatnip(1);
+
+    if (gained > 0) {
+      const id = Date.now() + Math.random();
+      setFloatingTexts((prev) => [
+        ...prev,
+        { id, x: e.clientX, y: e.clientY - 30, text: `+${gained}` },
+      ]);
+
+      setTimeout(() => {
+        setFloatingTexts((prev) => prev.filter((ft) => ft.id !== id));
+      }, 1000);
+    }
   };
 
   // Helper to color the rate
@@ -152,7 +179,7 @@ export default function ResourcePanel({
           }
 
           return (
-            <div className={`flex flex-col shrink-0 py-1 px-2 sm:px-3 rounded-xl bg-slate-900/40 border border-slate-800/80 font-sans transition-all duration-300 ${
+            <div className={`flex flex-col shrink-0 py-1 px-2 sm:px-3 rounded-xl theme-bg-card border theme-border font-sans transition-all duration-300 ${
               isCompact ? 'gap-0.5' : 'gap-1'
             }`}>
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -164,7 +191,7 @@ export default function ResourcePanel({
                     }`}>
                       {curDimension.name}
                     </span>
-                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono">Yr {currentYear}</span>
+                    <span className="text-[9px] sm:text-[10px] theme-text-muted font-mono">Yr {currentYear}</span>
                   </div>
                   <span className={`font-mono font-extrabold ${activeSeasonData.color} mt-0.5 leading-none ${
                     isCompact ? 'text-[10px] sm:text-[11px]' : 'text-[11px] sm:text-xs'
@@ -174,25 +201,20 @@ export default function ResourcePanel({
                 </div>
               </div>
               
-              <div className="text-[8px] sm:text-[9px] text-slate-400 font-mono tracking-wide max-w-[120px] sm:max-w-[170px] leading-tight select-none">
+              <div className="text-[8px] sm:text-[9px] theme-text-muted font-mono tracking-wide max-w-[120px] sm:max-w-[170px] leading-tight select-none">
                 {activeSeasonData.desc}
               </div>
 
               {/* Season duration progress bar */}
               <div className="flex flex-col gap-1 mt-1 w-full max-w-[120px] sm:max-w-[170px]">
-                <div className="flex justify-between text-[7px] sm:text-[8px] leading-none text-slate-500 font-mono">
+                <div className="flex justify-between text-[7px] sm:text-[8px] leading-none theme-text-muted font-mono">
                   <span>Duration</span>
                   <span>{Math.ceil(Math.max(0, 40 - currentDay))} days left</span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden relative border border-slate-700/30">
+                <div className="h-1 w-full theme-bg-hover rounded-full overflow-hidden relative border theme-border">
                   <div 
-                    className={`h-full ${
-                      currentSeason === 'spring' ? 'bg-emerald-500' :
-                      currentSeason === 'summer' ? 'bg-amber-500' :
-                      currentSeason === 'autumn' ? 'bg-orange-500' :
-                      'bg-cyan-500'
-                    } transition-all duration-300`}
-                    style={{ width: `${100 - Math.min(100, (((currentDay - 1) + ((store.dayProgress || 0) / DAY_DURATION_IN_GAME_SEC)) / 40) * 100)}%` }}
+                    className={`h-full theme-accent-bg transition-all duration-300`}
+                    style={{ width: `${Math.min(100, (((currentDay - 1) + ((store.dayProgress || 0) / DAY_DURATION_IN_GAME_SEC)) / 40) * 100)}%` }}
                   />
                 </div>
               </div>
@@ -257,103 +279,154 @@ export default function ResourcePanel({
             isCompact ? "gap-1.5 sm:gap-3 md:gap-4" : "gap-2 sm:gap-4 md:gap-6"
           }`}
         >
-          {resourcesList.map((res) => {
-            const unlocked =
-              res.id === "catnip" ||
-              store.unlocks[res.id as keyof typeof store.unlocks];
-            if (!unlocked) return null;
+          {(() => {
+            const unlockedResources = resourcesList.filter(
+              (res) => res.id === "catnip" || store.unlocks[res.id as keyof typeof store.unlocks]
+            );
 
-            const cur = store.resources[res.id]?.amount ?? 0;
-            const limit = store.resources[res.id]?.max ?? 0;
-            const showLimit = limit > 0;
-            const percent = getPercent(cur, limit);
+            const visibleResources = unlockedResources.slice(0, 3);
+            const dropdownResources = unlockedResources.slice(3);
 
-            return (
-              <div
-                key={res.id}
-                className={`flex flex-col shrink-0 transition-all duration-300 ${
-                  isCompact
-                    ? "gap-0.5 w-[75px] sm:w-[108px] xl:w-[114px]"
-                    : "gap-1 w-[80px] sm:w-[124px] xl:w-[130px]"
-                }`}
-              >
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <div
-                    className={`rounded-lg theme-bg-card border theme-border backdrop-blur-md shrink-0 transition-all duration-300 ${
-                      isCompact ? "p-0.5 sm:p-1" : "p-1 sm:p-1.5"
-                    }`}
-                  >
-                    {getResourceIcon(res.id)}
-                  </div>
-                  <div className="flex flex-col col-span-2 min-w-0">
-                    <span
-                      className={`font-bold uppercase tracking-wider theme-text-sec leading-none truncate max-w-[80px] hidden sm:block ${
-                        isCompact ? "text-[9px]" : "text-[10px]"
+            const renderResource = (res: typeof resourcesList[0]) => {
+              const cur = store.resources[res.id]?.amount ?? 0;
+              const limit = store.resources[res.id]?.max ?? 0;
+              const showLimit = limit > 0;
+              const percent = getPercent(cur, limit);
+
+              return (
+                <div
+                  key={res.id}
+                  className={`flex flex-col shrink-0 transition-all duration-300 ${
+                    isCompact
+                      ? "gap-0.5 w-[75px] sm:w-[108px] xl:w-[114px]"
+                      : "gap-1 w-[80px] sm:w-[124px] xl:w-[130px]"
+                  }`}
+                >
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div
+                      className={`rounded-lg theme-bg-card border theme-border backdrop-blur-md shrink-0 transition-all duration-300 ${
+                        isCompact ? "p-0.5 sm:p-1" : "p-1 sm:p-1.5"
                       }`}
                     >
-                      {res.label}
-                    </span>
-                    <span
-                      className={
-                        getRateColor(res.rate) +
-                        ` mt-0.5 leading-none font-mono ${
-                          isCompact
-                            ? "text-[8px] sm:text-[8px]"
-                            : "text-[8px] sm:text-[9px]"
-                        }`
-                      }
-                    >
-                      {res.rate >= 0 ? "+" : ""}
-                      {res.rate.toFixed(1)}
-                      <span className="hidden sm:inline">/s</span>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-0.5 sm:mt-1">
-                  <div className="flex items-baseline sm:items-end justify-between font-mono mb-0.5 sm:mb-1">
-                    <span
-                      className={`font-bold theme-text-main leading-none transition-all duration-300 ${
-                        isCompact
-                          ? "text-xs sm:text-xs xl:text-sm"
-                          : "text-xs sm:text-sm xl:text-base"
-                      }`}
-                    >
-                      {formatNumber(cur)}
-                    </span>
-                    {showLimit && (
+                      {getResourceIcon(res.id)}
+                    </div>
+                    <div className="flex flex-col col-span-2 min-w-0">
                       <span
-                        className={`theme-text-muted leading-none transition-all duration-300 ${
+                        className={`font-bold uppercase tracking-wider theme-text-sec leading-none truncate max-w-[80px] hidden sm:block ${
+                          isCompact ? "text-[9px]" : "text-[10px]"
+                        }`}
+                      >
+                        {res.label}
+                      </span>
+                      <span
+                        className={
+                          getRateColor(res.rate) +
+                          ` mt-0.5 leading-none font-mono ${
+                            isCompact
+                              ? "text-[8px] sm:text-[8px]"
+                              : "text-[8px] sm:text-[9px]"
+                          }`
+                        }
+                      >
+                        {res.rate >= 0 ? "+" : ""}
+                        {res.rate.toFixed(1)}
+                        <span className="hidden sm:inline">/s</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-0.5 sm:mt-1">
+                    <div className="flex items-baseline sm:items-end justify-between font-mono mb-0.5 sm:mb-1">
+                      <span
+                        className={`font-bold theme-text-main leading-none transition-all duration-300 ${
                           isCompact
                             ? "text-xs sm:text-xs xl:text-sm"
                             : "text-xs sm:text-sm xl:text-base"
                         }`}
                       >
-                        /{formatNumber(limit)}
+                        {formatNumber(cur)}
                       </span>
+                      {showLimit && (
+                        <span
+                          className={`theme-text-muted leading-none transition-all duration-300 ${
+                            isCompact
+                              ? "text-xs sm:text-xs xl:text-sm"
+                              : "text-xs sm:text-sm xl:text-base"
+                          }`}
+                        >
+                          /{formatNumber(limit)}
+                        </span>
+                      )}
+                    </div>
+
+                    {showLimit && (
+                      <div className="w-full h-0.5 theme-bg-hover rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-300 rounded-full ${
+                            percent >= 100
+                              ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                              : percent >= 90
+                                ? "bg-amber-300/80"
+                                : "theme-bg-main bg-neutral-400"
+                          }`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
                     )}
                   </div>
-
-                  {showLimit && (
-                    <div className="w-full h-0.5 theme-bg-hover rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 rounded-full ${
-                          percent >= 100
-                            ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]"
-                            : percent >= 90
-                              ? "bg-amber-300/80"
-                              : "theme-bg-main bg-neutral-400"
-                        }`}
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                  )}
                 </div>
-              </div>
+              );
+            };
+
+            return (
+              <>
+                {visibleResources.map(renderResource)}
+                
+                {dropdownResources.length > 0 && (
+                  <div className="relative flex items-center ml-2">
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(!isDropdownOpen);
+                        if (store.soundEnabled) playClickSound("click");
+                      }}
+                      className="px-3 py-1.5 rounded-lg theme-bg-card border theme-border theme-text-main hover:theme-bg-hover transition-colors font-bold text-xs shadow-sm flex items-center gap-1 cursor-pointer h-full"
+                    >
+                      <span>+{dropdownResources.length}</span>
+                      <span className="hidden sm:inline">More</span>
+                    </button>
+                    
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 p-3 theme-bg-app border theme-border rounded-xl shadow-xl z-50 flex gap-4 xl:gap-6 min-w-max border-cyan-500/20 backdrop-blur-md">
+                        {dropdownResources.map(renderResource)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             );
-          })}
+          })()}
         </div>
       </div>
+
+      {/* Floating Texts Container */}
+      <AnimatePresence>
+        {floatingTexts.map((ft) => (
+          <motion.div
+            key={ft.id}
+            initial={{ opacity: 1, y: ft.y, x: ft.x }}
+            animate={{ opacity: 0, y: ft.y - 40, scale: 1.2 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="fixed pointer-events-none z-50 font-bold font-mono text-[#39ff14] text-lg drop-shadow-md"
+            style={{
+              left: 0,
+              top: 0,
+            }}
+          >
+            {ft.text}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

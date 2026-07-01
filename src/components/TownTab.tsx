@@ -683,7 +683,7 @@ export default function TownTab({ store }: TownTabProps) {
                 {/* Job Dropdown Selection */}
                 <select
                   value={kitten.job}
-                  onChange={(e) => handleAssignJob(kitten.id, e.target.value as any)}
+                  onChange={(e) => handleAssignJob(kitten.id, e.target.value as JobType | 'unemployed')}
                   className="theme-bg-app border theme-border theme-text-main text-[11px] px-3 py-2 shrink-0 focus:outline-none focus:theme-border cursor-pointer font-sans"
                 >
                   <option value="unemployed">💤 Idle</option>
