@@ -15,6 +15,7 @@ import {
 } from '../types';
 import { BUILDINGS, SCIENCES, JOBS, UPGRADES, PORTAL_UPGRADES, DIMENSIONS_DATA, generateRandomKitten } from '../gameData';
 import { ACHIEVEMENTS } from '../utils/achievements';
+import { playClickSound } from '../utils/audio';
 
 export interface CertificateDef {
   id: 'bronze' | 'silver' | 'gold' | 'infinite';
@@ -997,9 +998,11 @@ export const useGameStore = create<GameState>()(
         } as any;
 
         const logsToAppend: GameLogMessage[] = [...seasonalLogs];
+        let playAchievementSound = false;
         ACHIEVEMENTS.forEach(ach => {
           if (!updatedAchievements[ach.id] && ach.check(tempState)) {
             updatedAchievements[ach.id] = true;
+            playAchievementSound = true;
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             logsToAppend.push({
               id: `ach-${ach.id}-${Math.random()}`,
@@ -1009,6 +1012,10 @@ export const useGameStore = create<GameState>()(
             });
           }
         });
+
+        if (playAchievementSound && state.soundEnabled) {
+          playClickSound('achievement');
+        }
 
         let finalLogs = state.logs;
         if (logsToAppend.length > 0) {

@@ -28,7 +28,7 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
   const handleBuyUpgrade = (id: UpgradeType) => {
     store.buyUpgrade(id);
     triggerHaptic('research');
-    if (store.soundEnabled) playClickSound('research');
+    if (store.soundEnabled) playClickSound('upgrade');
   };
 
   const multiplier = store.buyMultiplier || 1;
@@ -471,7 +471,7 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
                 <button
                   onClick={() => {
                     store.synthesizeCertificate(id as 'bronze' | 'silver' | 'gold' | 'infinite');
-                    if (store.soundEnabled) playClickSound('research');
+                    if (store.soundEnabled) playClickSound('upgrade');
                   }}
                   disabled={!canAfford}
                   className={`w-full py-3 text-2xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 rounded-lg cursor-pointer transition-all active:scale-[0.98] ${

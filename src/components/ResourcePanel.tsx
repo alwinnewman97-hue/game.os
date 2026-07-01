@@ -323,7 +323,7 @@ export default function ResourcePanel({
                       <span
                         className={
                           getRateColor(res.rate) +
-                          ` mt-0.5 leading-none font-mono ${
+                          ` mt-0.5 leading-none font-mono tabular-nums ${
                             isCompact
                               ? "text-[8px] sm:text-[8px]"
                               : "text-[8px] sm:text-[9px]"
@@ -338,9 +338,9 @@ export default function ResourcePanel({
                   </div>
 
                   <div className="mt-0.5 sm:mt-1">
-                    <div className="flex items-baseline sm:items-end justify-between font-mono mb-0.5 sm:mb-1">
+                    <div className="flex items-baseline sm:items-end justify-between font-mono tabular-nums mb-0.5 sm:mb-1">
                       <span
-                        className={`font-bold theme-text-main leading-none transition-all duration-300 ${
+                        className={`font-bold font-mono tabular-nums theme-text-main leading-none transition-all duration-300 ${
                           isCompact
                             ? "text-xs sm:text-xs xl:text-sm"
                             : "text-xs sm:text-sm xl:text-base"
@@ -350,7 +350,7 @@ export default function ResourcePanel({
                       </span>
                       {showLimit && (
                         <span
-                          className={`theme-text-muted leading-none transition-all duration-300 ${
+                          className={`font-mono tabular-nums theme-text-muted leading-none transition-all duration-300 ${
                             isCompact
                               ? "text-xs sm:text-xs xl:text-sm"
                               : "text-xs sm:text-sm xl:text-base"
