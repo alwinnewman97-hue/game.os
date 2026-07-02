@@ -338,106 +338,99 @@ export const useGameStore = create<GameState>()(
         const now = Date.now();
 
         // ----------------------------------------
-        // SEASONAL CALENDAR SYSTEM
+        // SEASONAL CALENDAR SYSTEM (GMT SYNCED)
         // ----------------------------------------
-        let dayProgress = (state.dayProgress !== undefined ? state.dayProgress : 0) + effectiveDelta;
-        let day = state.day !== undefined ? state.day : 1;
-        let season = state.season !== undefined ? state.season : 'spring';
-        let year = state.year !== undefined ? state.year : 1;
-
+        const nowMs = Date.now();
+        const totalRealSeconds = Math.floor(nowMs / 1000);
+        const dayDuration = DAY_DURATION_IN_GAME_SEC;
+        const totalInGameDays = Math.floor(totalRealSeconds / dayDuration);
+        
+        const newYear = Math.floor(totalInGameDays / 160) + 1;
         const seasonSequence: ('spring' | 'summer' | 'autumn' | 'winter')[] = ['spring', 'summer', 'autumn', 'winter'];
-        const seasonalLogs: GameLogMessage[] = [];
+        const newSeasonIdx = Math.floor((totalInGameDays % 160) / 40);
+        const newSeason = seasonSequence[newSeasonIdx];
+        const newDay = (totalInGameDays % 40) + 1;
+        const newDayProgress = (nowMs % (dayDuration * 1000)) / 1000;
 
-        while (dayProgress >= DAY_DURATION_IN_GAME_SEC) {
-          dayProgress -= DAY_DURATION_IN_GAME_SEC;
-          const prevDay = day;
-          const prevSeason = season;
+        const seasonalLogs: GameLogMessage[] = [];
+        
+        // Detect transitions to add logs
+        if (state.day !== undefined && (state.day !== newDay || state.season !== newSeason || state.year !== newYear)) {
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           
-          day += 1;
-          if (day > 40) {
-            day = 1;
-            const currentIdx = seasonSequence.indexOf(season);
-            const nextIdx = (currentIdx + 1) % 4;
-            season = seasonSequence[nextIdx];
-            
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            if (season === 'spring') {
-              year += 1;
-              seasonalLogs.push({
-                id: `season-spring-${year}-${Math.random()}`,
-                time: timeStr,
-                text: `🎉 Happy New Year! Welcome to Year ${year} in the Citadel of Ricks!`,
-                type: 'success'
-              });
-            } else {
-              const seasonNames = {
-                spring: '🌱 Spring (Vernal Equinox)',
-                summer: '☀️ Summer (Solar Zenith)',
-                autumn: '🍁 Autumn (Golden Harvest)',
-                winter: '❄️ Winter (Cryo-Frost)'
-              };
-              seasonalLogs.push({
-                id: `season-trans-${season}-${year}-${Math.random()}`,
-                time: timeStr,
-                text: `🍂 The season has transitioned to ${seasonNames[season as 'spring' | 'summer' | 'autumn' | 'winter']}. Adapt your laboratories!`,
-                type: 'info'
-              });
-            }
+          if (state.year !== undefined && newYear !== state.year) {
+            seasonalLogs.push({
+              id: `season-spring-${newYear}-${Math.random()}`,
+              time: timeStr,
+              text: `🎉 Happy New Year! Welcome to Year ${newYear} in the Citadel of Ricks!`,
+              type: 'success'
+            });
+          } else if (state.season !== undefined && newSeason !== state.season) {
+            const seasonNames = {
+              spring: '🌱 Spring (Vernal Equinox)',
+              summer: '☀️ Summer (Solar Zenith)',
+              autumn: '🍁 Autumn (Golden Harvest)',
+              winter: '❄️ Winter (Cryo-Frost)'
+            };
+            seasonalLogs.push({
+              id: `season-trans-${newSeason}-${newYear}-${Math.random()}`,
+              time: timeStr,
+              text: `🍂 The season has transitioned to ${seasonNames[newSeason]}. Adapt your laboratories!`,
+              type: 'info'
+            });
           }
 
-          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
           // Seasonal festival / event triggers
-          if (season === 'spring' && day === 10) {
+          if (newSeason === 'spring' && newDay === 10) {
             seasonalLogs.push({
               id: `fest-spring-start-${Math.random()}`,
               time: timeStr,
               text: `🌸 Festival Started: "Citadel Spring Break"! Mortys are ecstatic! (+20% Happiness, +15% Job Speed for 5 days)`,
               type: 'success'
             });
-          } else if (season === 'spring' && day === 15) {
+          } else if (newSeason === 'spring' && newDay === 15) {
             seasonalLogs.push({
               id: `fest-spring-end-${Math.random()}`,
               time: timeStr,
               text: `🌸 "Citadel Spring Break" festival has ended. Back to research!`,
               type: 'info'
             });
-          } else if (season === 'summer' && day === 20) {
+          } else if (newSeason === 'summer' && newDay === 20) {
             seasonalLogs.push({
               id: `fest-summer-start-${Math.random()}`,
               time: timeStr,
               text: `🔥 Event Started: "Solar Purge"! Intense radiation doubles Plutonium scrap yield, but warning of spatial anomalies!`,
               type: 'warn'
             });
-          } else if (season === 'summer' && day === 23) {
+          } else if (newSeason === 'summer' && newDay === 23) {
             seasonalLogs.push({
               id: `fest-summer-end-${Math.random()}`,
               time: timeStr,
               text: `🔥 "Solar Purge" radiation has subsided. Plutonium scrap rates return to normal.`,
               type: 'info'
             });
-          } else if (season === 'autumn' && day === 15) {
+          } else if (newSeason === 'autumn' && newDay === 15) {
             seasonalLogs.push({
               id: `fest-autumn-start-${Math.random()}`,
               time: timeStr,
               text: `🍁 Event Started: "The Great Seed Harvest"! Botanical clones gather +50% extra Mega Seeds!`,
               type: 'success'
             });
-          } else if (season === 'autumn' && day === 20) {
+          } else if (newSeason === 'autumn' && newDay === 20) {
             seasonalLogs.push({
               id: `fest-autumn-end-${Math.random()}`,
               time: timeStr,
               text: `🍁 "The Great Seed Harvest" has concluded.`,
               type: 'info'
             });
-          } else if (season === 'winter' && day === 25) {
+          } else if (newSeason === 'winter' && newDay === 25) {
             seasonalLogs.push({
               id: `fest-winter-start-${Math.random()}`,
               time: timeStr,
               text: `🎁 Holiday Event: "Cromulon Gift-giving"! The giant heads are pleased. +30% Science and Culture generation!`,
               type: 'success'
             });
-          } else if (season === 'winter' && day === 30) {
+          } else if (newSeason === 'winter' && newDay === 30) {
             seasonalLogs.push({
               id: `fest-winter-end-${Math.random()}`,
               time: timeStr,
@@ -446,6 +439,11 @@ export const useGameStore = create<GameState>()(
             });
           }
         }
+
+        let dayProgress = newDayProgress;
+        let day = newDay;
+        let season = newSeason;
+        let year = newYear;
 
         // Active event helpers
         const isSpringBreak = season === 'spring' && day >= 10 && day < 15;
@@ -1556,8 +1554,75 @@ export const useGameStore = create<GameState>()(
       }),
 
       hardReset: () => {
-        localStorage.removeItem('rick-and-morty-incremental-storage');
-        window.location.reload();
+        try {
+          localStorage.removeItem('rick-and-morty-incremental-storage');
+        } catch (e) {
+          console.error(e);
+        }
+        
+        set({
+          resources: BASE_RESOURCES,
+          buildings: BASE_BUILDINGS,
+          researched: BASE_RESEARCHED,
+          upgrades: BASE_UPGRADES,
+          essentialJobs: BASE_ESSENTIAL_JOBS,
+          smartAssignRatios: BASE_SMART_ASSIGN_RATIOS,
+          smartAssignMode: 'dynamic',
+          jobPresets: {},
+          village: {
+            kittens: [],
+            maxKittens: 0,
+            happiness: 100,
+          },
+          activeCertificates: [],
+          craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
+          achievements: {},
+          unlocks: {
+            wood: false,
+            minerals: false,
+            iron: false,
+            science: false,
+            village: false,
+            workshop: false,
+            culture: false,
+            darkMatter: false,
+            fluid: false
+          },
+          autoBuild: {
+            hut: false,
+            logHouse: false,
+            mansion: false,
+            pasture: false,
+            barn: false,
+            warehouse: false,
+            port: false,
+            catnipField: false,
+          } as any,
+          currentDimension: 'EarthC137',
+          portalResets: 0,
+          prestigeMultiplier: 1,
+          portalFlux: 0,
+          portalUpgrades: { dimensionalAmplifier: 0, quantumResonator: 0, fluxAccelerator: 0, chronalDilator: 0 },
+          gameSpeed: 1,
+          soundEnabled: true,
+          theme: 'dark',
+          buyMultiplier: 1,
+          insaneMode: false,
+          density: 'relaxed',
+          activeAnomaly: null,
+          year: 1,
+          season: 'spring',
+          day: 1,
+          dayProgress: 0,
+          logs: [{ id: 'init', time: new Date().toLocaleTimeString(), text: "Rick's portal scanner online. Hard reset completed.", type: 'success' }],
+          lastTick: Date.now()
+        });
+
+        try {
+          window.location.reload();
+        } catch(e) {
+          console.error("Failed to reload", e);
+        }
       },
 
       setDensity: (density: 'compact' | 'relaxed') => set({ density }),
