@@ -237,6 +237,7 @@ export const useGameStore = create<GameState>()(
       achievements: {},
       portalFlux: 0,
       currentDimension: 'EarthC137',
+      dimensionEnterTime: Date.now(),
       year: 1,
       season: 'spring',
       day: 1,
@@ -1433,6 +1434,7 @@ export const useGameStore = create<GameState>()(
           },
           activeCertificates: [],
           craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
+          dimensionEnterTime: Date.now(),
           currentDimension: nextDimension,
           portalUpgrades: preservedUpgrades,
           logs: [
@@ -1598,6 +1600,7 @@ export const useGameStore = create<GameState>()(
             port: false,
             catnipField: false,
           } as any,
+          dimensionEnterTime: Date.now(),
           currentDimension: 'EarthC137',
           portalResets: 0,
           prestigeMultiplier: 1,
@@ -1617,12 +1620,26 @@ export const useGameStore = create<GameState>()(
           logs: [{ id: 'init', time: new Date().toLocaleTimeString(), text: "Rick's portal scanner online. Hard reset completed.", type: 'success' }],
           lastTick: Date.now()
         });
+      },
 
-        try {
-          window.location.reload();
-        } catch(e) {
-          console.error("Failed to reload", e);
-        }
+      loadCloudState: (cloudState: any) => {
+        const state = get();
+        set({
+          resources: cloudState.resources || BASE_RESOURCES,
+          buildings: cloudState.buildings || BASE_BUILDINGS,
+          researched: cloudState.researched || BASE_RESEARCHED,
+          upgrades: cloudState.upgrades || BASE_UPGRADES,
+          portalUpgrades: cloudState.portalUpgrades || state.portalUpgrades,
+          unlocks: cloudState.unlocks || state.unlocks,
+          portalResets: cloudState.portalResets || state.portalResets,
+          portalFlux: cloudState.portalFlux || state.portalFlux,
+          currentDimension: cloudState.currentDimension || state.currentDimension,
+          dimensionEnterTime: cloudState.dimensionEnterTime || Date.now(),
+          year: cloudState.year || state.year,
+          season: cloudState.season || state.season,
+          day: cloudState.day || state.day,
+        });
+        state.addLog(`Cloud sync complete! State restored.`, 'success');
       },
 
       setDensity: (density: 'compact' | 'relaxed') => set({ density }),

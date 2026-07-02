@@ -29,6 +29,7 @@ import {
   Hand,
   Zap,
   Calendar,
+  Trophy,
 } from "lucide-react";
 
 import ResourcePanel from "./components/ResourcePanel";
@@ -38,12 +39,13 @@ import ScienceTab from "./components/ScienceTab";
 import UpgradesTab from "./components/UpgradesTab";
 import AchievementsTab from "./components/AchievementsTab";
 import SettingsTab from "./components/SettingsTab";
+import LeaderboardTab from "./components/LeaderboardTab";
 import { playClickSound } from "./utils/audio";
 import { AnimatePresence, motion } from "motion/react";
 import SplashStartup from "./components/SplashStartup";
 
 type ActiveTabType =
-  "bonfire" | "town" | "science" | "upgrades" | "achievements" | "settings";
+  "bonfire" | "town" | "science" | "upgrades" | "achievements" | "settings" | "leaderboard";
 
 export default function App() {
   const store = useGameStore();
@@ -369,6 +371,8 @@ export default function App() {
         return <UpgradesTab store={store} />;
       case "achievements":
         return <AchievementsTab store={store} />;
+      case "leaderboard":
+        return <LeaderboardTab store={store} />;
       case "settings":
         return <SettingsTab store={store} />;
       default:
@@ -601,6 +605,30 @@ export default function App() {
                 Badges
               </span>
               {activeTab === "achievements" && (
+                <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full font-sans text-[#39ff14]/90" />
+              )}
+            </button>
+
+            <button
+              onClick={() => handleTabChange("leaderboard")}
+              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                activeTab === "leaderboard"
+                  ? "portal-tab-btn-active scale-100"
+                  : "theme-text-muted scale-95"
+              }`}
+            >
+              <Trophy
+                size={18}
+                className={
+                  activeTab === "leaderboard"
+                    ? "text-[#39ff14] animate-pulse"
+                    : "theme-text-muted"
+                }
+              />
+              <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
+                Rank
+              </span>
+              {activeTab === "leaderboard" && (
                 <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full font-sans text-[#39ff14]/90" />
               )}
             </button>

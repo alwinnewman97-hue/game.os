@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameState } from '../types';
-import { Settings, Zap, RotateCcw, Skull, Layout, Palette, AlertTriangle } from 'lucide-react';
+import { Settings, Zap, RotateCcw, Skull, Layout, Palette, AlertTriangle, Cloud, CloudUpload, CloudDownload, LogIn, LogOut } from 'lucide-react';
+import { saveStateToCloud, loadStateFromCloud, auth, signInWithGoogle, logoutUser } from '../lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface SettingsTabProps {
   store: GameState;
@@ -9,6 +11,85 @@ interface SettingsTabProps {
 export default function SettingsTab({ store }: SettingsTabProps) {
   const [showPortalConfirm, setShowPortalConfirm] = useState(false);
   const [showHardResetConfirm, setShowHardResetConfirm] = useState(false);
+  const [cloudUsername, setCloudUsername] = useState('');
+  const [cloudMessage, setCloudMessage] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      // Only set user if not anonymous
+      if (currentUser && !currentUser.isAnonymous) {
+        setUser(currentUser);
+        if (currentUser.displayName) {
+          setCloudUsername(currentUser.displayName);
+        }
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setCloudMessage('Signing in...');
+      await signInWithGoogle();
+      setCloudMessage('Signed in successfully!');
+    } catch (e: any) {
+      console.error(e);
+      setCloudMessage('Failed to sign in.');
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logoutUser();
+      setCloudMessage('Signed out.');
+    } catch (e: any) {
+      console.error(e);
+      setCloudMessage('Failed to sign out.');
+    }
+  };
+
+  const handleSaveToCloud = async () => {
+    if (!user) {
+      setCloudMessage('Please sign in to save your game.');
+      return;
+    }
+    if (!cloudUsername.trim()) {
+      setCloudMessage('Please enter a Pilot Name for the leaderboard.');
+      return;
+    }
+    setCloudMessage('Saving...');
+    try {
+      await saveStateToCloud(user.uid, cloudUsername.trim(), store);
+      setCloudMessage('Successfully saved to multiverse cloud!');
+      store.addLog('State uploaded to Citadel Cloud.', 'success');
+    } catch (e: any) {
+      console.error(e);
+      setCloudMessage('Error saving to cloud.');
+    }
+  };
+  
+  const handleLoadFromCloud = async () => {
+    if (!user) {
+      setCloudMessage('Please sign in to load your game.');
+      return;
+    }
+    setCloudMessage('Loading...');
+    try {
+      const state = await loadStateFromCloud(user.uid);
+      if (state) {
+        store.loadCloudState(state);
+        setCloudMessage('Successfully loaded from multiverse cloud!');
+      } else {
+        setCloudMessage('No save found for your account.');
+      }
+    } catch (e: any) {
+      console.error(e);
+      setCloudMessage('Error loading from cloud.');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg mx-auto p-6 animate-fade-in">
@@ -144,6 +225,65 @@ export default function SettingsTab({ store }: SettingsTabProps) {
         </div>
       </div>
       
+      {/* CITADEL CLOUD BACKUP */}
+      <div className="theme-bg-panel p-6 rounded-2xl border theme-border">
+        <h3 className="text-sm font-black theme-text-main uppercase tracking-widest mb-4 flex items-center gap-1.5">
+          <Cloud size={15} className="text-[#00b0c8]" />
+          Citadel Cloud Sync
+        </h3>
+        
+        {!user ? (
+          <div>
+            <p className="text-xs theme-text-muted mb-4">
+              Sign in with your Google Account to save your multiverse progress to the Citadel Cloud, sync across devices, and compete on the leaderboard!
+            </p>
+            <button 
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 flex items-center justify-center gap-2 bg-[#192026] border border-[#39ff14]/50 hover:border-[#39ff14] text-[#39ff14] font-bold rounded-xl transition-all cursor-pointer"
+            >
+              <LogIn size={16} /> Sign in with Google
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs theme-text-muted mb-4">
+              Authenticated as <strong className="theme-text-main">{user.displayName || user.email}</strong>. 
+              Save your state to the cloud or load an existing save.
+            </p>
+            
+            <input 
+              type="text" 
+              placeholder="Enter Pilot Name (e.g. RickC137)" 
+              value={cloudUsername}
+              onChange={(e) => setCloudUsername(e.target.value)}
+              className="w-full bg-black/50 border theme-border theme-text-main rounded-xl p-3 mb-4 text-sm font-bold focus:outline-none focus:border-[#39ff14]"
+            />
+            
+            <div className="flex gap-2 mb-3">
+              <button onClick={handleSaveToCloud} className="flex-1 py-3 flex items-center justify-center gap-2 bg-[#192026] border border-[#00b0c8]/50 hover:border-[#00b0c8] text-[#00b0c8] font-bold rounded-xl transition-all cursor-pointer">
+                <CloudUpload size={16} /> Save
+              </button>
+              <button onClick={handleLoadFromCloud} className="flex-1 py-3 flex items-center justify-center gap-2 bg-[#192026] border border-[#00b0c8]/50 hover:border-[#00b0c8] text-[#00b0c8] font-bold rounded-xl transition-all cursor-pointer">
+                <CloudDownload size={16} /> Load
+              </button>
+            </div>
+            
+            <button 
+              onClick={handleSignOut}
+              className="w-full py-2 flex items-center justify-center gap-2 theme-bg-card border theme-border theme-text-muted hover:theme-text-main font-bold rounded-xl transition-all cursor-pointer text-xs"
+            >
+              <LogOut size={14} /> Sign out
+            </button>
+          </div>
+        )}
+        
+        {cloudMessage && (
+          <div className="text-xs text-center mt-3 theme-text-main font-semibold">
+            {cloudMessage}
+          </div>
+        )}
+      </div>
+
       <div className="theme-bg-panel p-6 rounded-2xl border theme-border">
         <h3 className="text-sm font-black theme-text-muted uppercase tracking-widest mb-4">
           Core Timeline Management

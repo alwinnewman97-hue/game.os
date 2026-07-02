@@ -167,6 +167,7 @@ export interface GameState {
   };
   
   // Prestige
+  dimensionEnterTime: number;
   portalResets: number;
   prestigeMultiplier: number;
 
@@ -210,4 +211,5 @@ export interface GameState {
   saveJobPreset: (name: string) => void;
   loadJobPreset: (name: string) => void;
   deleteJobPreset: (name: string) => void;
+  loadCloudState: (cloudState: any) => void;
 }
