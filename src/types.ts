@@ -94,7 +94,16 @@ export interface ActiveCertificateBoost {
   boostPercent: number; // e.g. 0.15 for 15%
 }
 
+export interface LifetimeStats {
+  totalTimePlayed: number; // in seconds
+  totalMortysBorn: number;
+  totalResourcesHarvested: number;
+}
+
 export interface GameState {
+  // Lifetime stats
+  lifetimeStats?: LifetimeStats;
+
   // Resources
   resources: Record<ResourceType, { amount: number; max: number }>;
   

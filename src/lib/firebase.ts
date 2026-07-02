@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp } from "firebase/firestore";
-import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAyVhqdlNlEfpzvBwLJB2DmrCcHWPlJsKc",
@@ -45,8 +45,18 @@ export const logoutUser = async () => {
   }
 };
 
-// Attempt anonymous sign-in so we can read/write data safely
-signInAnonymously(auth).catch(console.error);
+// Handle anonymous fallback safely: only sign in anonymously if there is no active session on start.
+let isInitialAuthCheck = true;
+onAuthStateChanged(auth, (user) => {
+  if (isInitialAuthCheck) {
+    isInitialAuthCheck = false;
+    if (!user) {
+      signInAnonymously(auth).catch((err) => {
+        console.error("Initial anonymous authentication failed", err);
+      });
+    }
+  }
+});
 
 export async function saveStateToCloud(userId: string, username: string, state: any) {
   if (!userId) throw new Error("User ID required");
@@ -68,6 +78,7 @@ export async function saveStateToCloud(userId: string, username: string, state: 
     year: state.year,
     season: state.season,
     day: state.day,
+    lifetimeStats: state.lifetimeStats || { totalTimePlayed: 0, totalMortysBorn: 0, totalResourcesHarvested: 0 },
     
     // Stats for leaderboard
     fluxScore: state.portalFlux,

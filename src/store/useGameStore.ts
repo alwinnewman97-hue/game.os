@@ -220,6 +220,11 @@ const initialLogs: GameLogMessage[] = [
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
+      lifetimeStats: {
+        totalTimePlayed: 0,
+        totalMortysBorn: 0,
+        totalResourcesHarvested: 0,
+      },
       resources: BASE_RESOURCES,
       buildings: BASE_BUILDINGS,
       researched: BASE_RESEARCHED,
@@ -1021,7 +1026,39 @@ export const useGameStore = create<GameState>()(
           finalLogs = [...logsToAppend, ...state.logs].slice(0, 80);
         }
 
+        // Calculate lifetime stats increments
+        const currentStats = state.lifetimeStats || { totalTimePlayed: 0, totalMortysBorn: 0, totalResourcesHarvested: 0 };
+        const prevKittensCount = state.village?.kittens?.length ?? 0;
+        const newKittensCount = updatedKittens.length;
+        const mortysBornThisTick = Math.max(0, newKittensCount - prevKittensCount);
+
+        const smelterSufficient = state.buildings.smelter > 0 &&
+          state.resources.wood.amount >= state.buildings.smelter * 1.0 * effectiveDelta &&
+          state.resources.minerals.amount >= state.buildings.smelter * 10.0 * effectiveDelta;
+
+        const generatorSufficient = state.buildings.portalGenerator > 0 &&
+          state.resources.darkMatter.amount >= state.buildings.portalGenerator * 5.0 * effectiveDelta &&
+          state.resources.minerals.amount >= state.buildings.portalGenerator * 10.0 * effectiveDelta;
+
+        const totalHarvestedThisTick = (
+          (fieldsPassiveRate + (farmerRate || 0)) +
+          (woodcutterBase * springBreakFactor * solarPurgeFactor) +
+          (minerBase + (state.buildings.mine * 0.05 * miningMinerBonus * dimensionalMultiplier * portalFluxMultiplier)) +
+          (scienceRate || 0) +
+          (cultureRate || 0) +
+          (smelterSufficient ? state.buildings.smelter * 0.18 * metalworkingSmelterBonus * productionMultiplier : 0) +
+          (darkMatterScientistRate + darkMatterExtractorRate) +
+          (generatorSufficient ? state.buildings.portalGenerator * 0.08 * productionMultiplier : 0)
+        ) * effectiveDelta;
+
+        const updatedLifetimeStats = {
+          totalTimePlayed: currentStats.totalTimePlayed + effectiveDelta,
+          totalMortysBorn: currentStats.totalMortysBorn + mortysBornThisTick,
+          totalResourcesHarvested: currentStats.totalResourcesHarvested + Math.max(0, totalHarvestedThisTick)
+        };
+
         set({
+          lifetimeStats: updatedLifetimeStats,
           lastTick: now,
           activeCertificates: updatedActive,
           achievements: updatedAchievements,
@@ -1067,12 +1104,19 @@ export const useGameStore = create<GameState>()(
         );
         const unlocks = { ...state.unlocks };
         if (amt >= 100) unlocks.wood = true;
+
+        const currentStats = state.lifetimeStats || { totalTimePlayed: 0, totalMortysBorn: 0, totalResourcesHarvested: 0 };
+
         return {
           resources: {
             ...state.resources,
             catnip: { ...state.resources.catnip, amount: amt }
           },
-          unlocks
+          unlocks,
+          lifetimeStats: {
+            ...currentStats,
+            totalResourcesHarvested: currentStats.totalResourcesHarvested + gainedAmount
+          }
         };
       }),
 
@@ -1377,10 +1421,15 @@ export const useGameStore = create<GameState>()(
          if (kittensList.length < maxKittens) {
             const extra = generateRandomKitten();
             state.addLog(`A stray Morty wanders out of space-time: ${extra.name} ${extra.surname}.`, 'success');
+            const currentStats = state.lifetimeStats || { totalTimePlayed: 0, totalMortysBorn: 0, totalResourcesHarvested: 0 };
             return {
               village: {
                 ...state.village,
                 kittens: [...kittensList, extra]
+              },
+              lifetimeStats: {
+                ...currentStats,
+                totalMortysBorn: currentStats.totalMortysBorn + 1
               }
             };
          }
@@ -1405,23 +1454,13 @@ export const useGameStore = create<GameState>()(
         set({
           resources: JSON.parse(JSON.stringify(BASE_RESOURCES)),
           buildings: JSON.parse(JSON.stringify(BASE_BUILDINGS)),
-          researched: JSON.parse(JSON.stringify(BASE_RESEARCHED)),
-          upgrades: JSON.parse(JSON.stringify(BASE_UPGRADES)),
+          researched: state.researched,
+          upgrades: state.upgrades,
           year: 1,
           season: 'spring',
           day: 1,
           dayProgress: 0,
-          unlocks: {
-            wood: false,
-            minerals: false,
-            iron: false,
-            science: false,
-            village: false,
-            workshop: false,
-            culture: false,
-            darkMatter: false,
-            fluid: false,
-          },
+          unlocks: state.unlocks,
           village: {
             kittens: [],
             maxKittens: 0,
@@ -1447,6 +1486,7 @@ export const useGameStore = create<GameState>()(
           ],
           portalResets: state.portalResets + 1,
           portalFlux: state.portalFlux + fluxEarned,
+          lifetimeStats: state.lifetimeStats,
           lastTick: Date.now()
         });
       },
@@ -1638,6 +1678,7 @@ export const useGameStore = create<GameState>()(
           year: cloudState.year || state.year,
           season: cloudState.season || state.season,
           day: cloudState.day || state.day,
+          lifetimeStats: cloudState.lifetimeStats || state.lifetimeStats || { totalTimePlayed: 0, totalMortysBorn: 0, totalResourcesHarvested: 0 }
         });
         state.addLog(`Cloud sync complete! State restored.`, 'success');
       },
