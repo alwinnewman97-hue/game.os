@@ -74,14 +74,62 @@ export default function App() {
       const now = Date.now();
       const deltaSeconds = (now - lastTime) / 1000;
 
-      // Advance game store, capping maximum single-frame lag to 2 seconds
-      store.tick(Math.min(2, deltaSeconds));
+      // Advance game store. Under normal operation, deltaSeconds is tiny.
+      // If deltaSeconds is larger than 3 seconds (e.g., due to background tab focus or sleep),
+      // we tick the full amount to guarantee no lost background progress!
+      if (deltaSeconds > 3) {
+        store.tick(deltaSeconds);
+        if (deltaSeconds > 15 && store.gameSpeed > 0) {
+          const mins = Math.floor(deltaSeconds / 60);
+          const hours = Math.floor(mins / 60);
+          let timeStr = `${Math.round(deltaSeconds)}s`;
+          if (mins > 0) {
+            timeStr = `${mins}m ${Math.round(deltaSeconds % 60)}s`;
+          }
+          if (hours > 0) {
+            timeStr = `${hours}h ${mins % 60}m`;
+          }
+          setOfflineProgressMsg(
+            `Dimension Re-synced! While your focus shifted for ${timeStr}, the simulation calculated background progress and credited all harvested materials.`,
+          );
+        }
+      } else {
+        store.tick(deltaSeconds);
+      }
 
       lastTime = now;
       animationFrameId = requestAnimationFrame(loop);
     };
 
     animationFrameId = requestAnimationFrame(loop);
+
+    // Visibility change handler to immediately catch up background progress when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const now = Date.now();
+        const elapsedSeconds = (now - store.lastTick) / 1000;
+        if (elapsedSeconds > 3) {
+          store.tick(elapsedSeconds);
+          lastTime = Date.now(); // Reset loop's baseline timer to prevent double ticking
+          if (elapsedSeconds > 15 && store.gameSpeed > 0) {
+            const mins = Math.floor(elapsedSeconds / 60);
+            const hours = Math.floor(mins / 60);
+            let timeStr = `${Math.round(elapsedSeconds)}s`;
+            if (mins > 0) {
+              timeStr = `${mins}m ${Math.round(elapsedSeconds % 60)}s`;
+            }
+            if (hours > 0) {
+              timeStr = `${hours}h ${mins % 60}m`;
+            }
+            setOfflineProgressMsg(
+              `Dimension Re-synced! While your focus shifted for ${timeStr}, the simulation calculated background progress and credited all harvested materials.`,
+            );
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Initial offline catchup calculation
     const now = Date.now();
@@ -110,6 +158,7 @@ export default function App() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearTimeout(timeout);
     };
   }, []);

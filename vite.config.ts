@@ -20,7 +20,11 @@ export default defineConfig(() => {
           background_color: '#121110',
           display: 'standalone',
           icons: [
-            { src: 'icon.svg', sizes: '192x192 512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+            { src: 'icon.svg', sizes: '192x192 512x512', type: 'image/svg+xml', purpose: 'any maskable' },
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: 'icon-192.jpg', sizes: '192x192', type: 'image/jpeg', purpose: 'any' },
+            { src: 'icon-512.jpg', sizes: '512x512', type: 'image/jpeg', purpose: 'any' }
           ]
         }
       })
