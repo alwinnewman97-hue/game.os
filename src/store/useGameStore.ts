@@ -1471,6 +1471,7 @@ export const useGameStore = create<GameState>()(
             barn: false,
             catnipField: false,
           },
+          activeAnomaly: null,
           activeCertificates: [],
           craftedCertificatesCount: { bronze: 0, silver: 0, gold: 0, infinite: 0 },
           dimensionEnterTime: Date.now(),

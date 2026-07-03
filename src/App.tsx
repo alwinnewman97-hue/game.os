@@ -78,8 +78,8 @@ export default function App() {
       // If deltaSeconds is larger than 3 seconds (e.g., due to background tab focus or sleep),
       // we tick the full amount to guarantee no lost background progress!
       if (deltaSeconds > 3) {
-        store.tick(deltaSeconds);
-        if (deltaSeconds > 15 && store.gameSpeed > 0) {
+        useGameStore.getState().tick(deltaSeconds);
+        if (deltaSeconds > 15 && useGameStore.getState().gameSpeed > 0) {
           const mins = Math.floor(deltaSeconds / 60);
           const hours = Math.floor(mins / 60);
           let timeStr = `${Math.round(deltaSeconds)}s`;
@@ -94,7 +94,7 @@ export default function App() {
           );
         }
       } else {
-        store.tick(deltaSeconds);
+        useGameStore.getState().tick(deltaSeconds);
       }
 
       lastTime = now;
@@ -107,11 +107,11 @@ export default function App() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         const now = Date.now();
-        const elapsedSeconds = (now - store.lastTick) / 1000;
+        const elapsedSeconds = (now - useGameStore.getState().lastTick) / 1000;
         if (elapsedSeconds > 3) {
-          store.tick(elapsedSeconds);
+          useGameStore.getState().tick(elapsedSeconds);
           lastTime = Date.now(); // Reset loop's baseline timer to prevent double ticking
-          if (elapsedSeconds > 15 && store.gameSpeed > 0) {
+          if (elapsedSeconds > 15 && useGameStore.getState().gameSpeed > 0) {
             const mins = Math.floor(elapsedSeconds / 60);
             const hours = Math.floor(mins / 60);
             let timeStr = `${Math.round(elapsedSeconds)}s`;
@@ -133,9 +133,9 @@ export default function App() {
 
     // Initial offline catchup calculation
     const now = Date.now();
-    const offlineSeconds = (now - store.lastTick) / 1000;
+    const offlineSeconds = (now - useGameStore.getState().lastTick) / 1000;
 
-    if (offlineSeconds > 25) {
+    if (offlineSeconds > 25 && useGameStore.getState().gameSpeed > 0) {
       // Calculate how many minutes offline
       const mins = Math.floor(offlineSeconds / 60);
       const hours = Math.floor(mins / 60);
@@ -145,7 +145,7 @@ export default function App() {
       }
 
       // Let's pass the offline seconds to the tick
-      store.tick(offlineSeconds);
+      useGameStore.getState().tick(offlineSeconds);
 
       setOfflineProgressMsg(
         `Welcome Back, Portal Master! While you were offline for ${timeStr}, your clones maintained the laboratories, harvested fresh Mega Seeds, and kept the fusion cores warm.`,
@@ -254,7 +254,9 @@ export default function App() {
     dimensionModifier *
     aqueductBoost *
     agricultureGreenhouseBonus *
-    seasonCropMultiplier;
+    seasonCropMultiplier *
+    dimensionalMultiplier *
+    portalFluxMultiplier;
   const farmerRateValue =
     jobStrengths.farmer *
     5.0 *
@@ -309,7 +311,7 @@ export default function App() {
       productionMultiplier *
       miningMinerBonus *
       springBreakFactor +
-    store.buildings.mine * 0.05 * miningMinerBonus;
+    store.buildings.mine * 0.05 * miningMinerBonus * dimensionalMultiplier * portalFluxMultiplier;
   let computedIronRate = 0;
 
   const metalworkingSmelterBonus = store.researched.metalworking ? 1.3 : 1.0;
@@ -369,7 +371,7 @@ export default function App() {
     0.05 *
     efficiencyFactor *
     productionMultiplier;
-  const darkMatterExtractorRate = store.buildings.darkMatterExtractor * 0.15;
+  const darkMatterExtractorRate = store.buildings.darkMatterExtractor * 0.15 * dimensionalMultiplier * portalFluxMultiplier;
   let computedDarkMatterRate =
     darkMatterScientistRate + darkMatterExtractorRate;
 
@@ -381,8 +383,8 @@ export default function App() {
   if (store.buildings.portalGenerator > 0) {
     const pgCount = store.buildings.portalGenerator;
     if (
-      (store.resources.darkMatter?.amount ?? 0) > 5 * pgCount &&
-      (store.resources.minerals?.amount ?? 0) > 10 * pgCount
+      (store.resources.darkMatter?.amount ?? 0) >= pgCount * 5.0 &&
+      (store.resources.minerals?.amount ?? 0) >= pgCount * 10.0
     ) {
       computedDarkMatterRate -= pgCount * 5.0;
       computedMineralsRate -= pgCount * 10.0;
