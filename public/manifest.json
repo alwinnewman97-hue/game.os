@@ -4,8 +4,8 @@
   "description": "A Rick & Morty themed incremental strategy game. Grow seeds, clone Mortys, and expand the Citadel.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#121110",
-  "theme_color": "#121110",
+  "background_color": "#080a0c",
+  "theme_color": "#080a0c",
   "icons": [
     {
       "src": "icon.svg",

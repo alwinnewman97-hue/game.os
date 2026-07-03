@@ -16,8 +16,8 @@ export default defineConfig(() => {
         manifest: {
           name: 'Citadel Incremental',
           short_name: 'Citadel',
-          theme_color: '#121110',
-          background_color: '#121110',
+          theme_color: '#080a0c',
+          background_color: '#080a0c',
           display: 'standalone',
           icons: [
             { src: 'icon.svg', sizes: '192x192 512x512', type: 'image/svg+xml', purpose: 'any maskable' },

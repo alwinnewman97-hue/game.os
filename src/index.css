@@ -17,33 +17,18 @@
 
 /* Custom Rick & Morty Sci-Fi styles */
 :root {
-  --bg-app: #121110; /* Cocoa Charcoal Tone */
-  --bg-panel: #1a1817; /* Rich espresso-tinted panel surface */
-  --bg-card: #242120; /* Rich espresso-tinted card surface */
-  --bg-hover: #35302e; /* Warm espresso highlighted hover */
-  --border-main: #312c2a; /* Soft warm sand/cocoa dark border */
-  --border-active: #dfa15b; /* Glowing warm gold-amber active */
-  --text-main: #fcfaf7; /* Alabaster text */
-  --text-sec: #dfa15b; /* Glowing amber secondary text */
-  --text-muted: #938880; /* Cocoa sand gray text */
-  --accent-color: #dfa15b; /* Amber accent */
-  --accent-text: #121110; /* Cocoa contrasting text */
-  --toggle-inactive: #2c2725;
-}
-
-[data-theme='light'] {
-  --bg-app: #faf6f0; /* Oatmeal & Parchment Palette */
-  --bg-panel: #ffffff; /* Clean warm paper white */
-  --bg-card: #f5efe6; /* Soft warm sand parchment */
-  --bg-hover: #ecdcc6; /* Sand hover splash */
-  --border-main: #e6dac6; /* Soft warm sand borders */
-  --border-active: #272421; /* High contrast espresso text tone as active indicator */
-  --text-main: #272421; /* Deep espresso text tone */
-  --text-sec: #8a5e3c; /* Roasted caramel text tone */
-  --text-muted: #7a7065; /* Warm sand gray */
-  --accent-color: #c18c5d; /* Caramel leather accent */
-  --accent-text: #fcfaf7; /* Alabaster text */
-  --toggle-inactive: #e1d0ba;
+  --bg-app: #080a0c;
+  --bg-panel: #11151a;
+  --bg-card: #192026;
+  --bg-hover: #222b33;
+  --border-main: rgba(57, 255, 20, 0.2);
+  --border-active: #39ff14;
+  --text-main: #f8fafc;
+  --text-sec: #39ff14;
+  --text-muted: #64748b;
+  --accent-color: #39ff14;
+  --accent-text: #080a0c;
+  --toggle-inactive: #222b33;
 }
 
 /* Structural Theme Utility classes */
@@ -62,14 +47,8 @@
 body {
   background-color: var(--bg-app);
   background-image: 
-    radial-gradient(ellipse at top, rgba(223, 161, 91, 0.05) 0%, transparent 60%),
-    radial-gradient(circle at 10% 20%, rgba(223, 161, 91, 0.02) 0%, transparent 50%);
-}
-
-[data-theme='light'] body {
-  background-color: var(--bg-app);
-  background-image: 
-    radial-gradient(ellipse at top, rgba(138, 94, 60, 0.04) 0%, transparent 60%);
+    radial-gradient(ellipse at top, rgba(57, 255, 20, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 10% 20%, rgba(57, 255, 20, 0.02) 0%, transparent 50%);
 }
 
 /* Custom gorgeous scrollbar aesthetics - Portal fluid */
@@ -128,20 +107,11 @@ body {
   border-color: var(--border-main);
 }
 
-[data-theme='light'] .portal-tab-btn:hover {
-  border-color: var(--border-active);
-}
-
 .portal-tab-btn-active {
   background-color: var(--bg-card) !important;
   border-color: var(--border-active) !important;
   color: var(--text-sec) !important;
-  box-shadow: 0 0 15px rgba(223, 161, 91, 0.1);
-}
-
-[data-theme='light'] .portal-tab-btn-active {
-  color: var(--text-main) !important;
-  box-shadow: 0 0 15px rgba(39, 36, 33, 0.08);
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.1);
 }
 
 .portal-tab-indicator {
@@ -162,38 +132,4 @@ body {
 :root .shadow-\[\#39ff14\]\/20 { --tw-shadow-color: color-mix(in srgb, var(--accent-color) 20%, transparent) !important; --tw-shadow: var(--tw-shadow-colored) !important; }
 :root .border-\[\#39ff14\]\/20 { border-color: color-mix(in srgb, var(--accent-color) 20%, transparent) !important; }
 :root .border-\[\#39ff14\]\/60 { border-color: color-mix(in srgb, var(--accent-color) 60%, transparent) !important; }
-
-/* TREVOR THEME (Rick & Morty Sci-Fi Colors) */
-[data-theme='trevor'] {
-  --bg-app: #080a0c;
-  --bg-panel: #11151a;
-  --bg-card: #192026;
-  --bg-hover: #222b33;
-  --border-main: rgba(57, 255, 20, 0.2);
-  --border-active: #39ff14;
-  --text-main: #f8fafc;
-  --text-sec: #39ff14;
-  --text-muted: #64748b;
-  --accent-color: #39ff14;
-  --accent-text: #080a0c;
-  --toggle-inactive: #222b33;
-}
-
-[data-theme='trevor'] .text-\[\#39ff14\] { color: #39ff14 !important; }
-[data-theme='trevor'] .bg-\[\#39ff14\] { background-color: #39ff14 !important; }
-[data-theme='trevor'] .border-\[\#39ff14\] { border-color: #39ff14 !important; }
-[data-theme='trevor'] .border-\[\#39ff14\]\/30 { border-color: rgba(37, 255, 20, 0.3) !important; }
-[data-theme='trevor'] .bg-\[\#39ff14\]\/5 { background-color: rgba(37, 255, 20, 0.05) !important; }
-[data-theme='trevor'] .text-\[\#39ff14\]\/80 { color: rgba(37, 255, 20, 0.8) !important; }
-[data-theme='trevor'] .text-\[\#39ff14\]\/85 { color: rgba(37, 255, 20, 0.85) !important; }
-[data-theme='trevor'] .text-\[\#39ff14\]\/90 { color: rgba(37, 255, 20, 0.9) !important; }
-[data-theme='trevor'] .shadow-\[\#39ff14\]\/20 { --tw-shadow-color: rgba(37, 255, 20, 0.2) !important; --tw-shadow: var(--tw-shadow-colored) !important; }
-[data-theme='trevor'] .border-\[\#39ff14\]\/20 { border-color: rgba(37, 255, 20, 0.2) !important; }
-[data-theme='trevor'] .border-\[\#39ff14\]\/60 { border-color: rgba(37, 255, 20, 0.6) !important; }
-
-/* Legibility fixes for yellow/amber on light bg */
-[data-theme='light'] .text-amber-400 { color: #d97706 !important; }
-[data-theme='light'] .bg-amber-400 { background-color: #d97706 !important; }
-[data-theme='light'] .text-yellow-400 { color: #ca8a04 !important; }
-[data-theme='light'] .text-red-400 { color: #dc2626 !important; }
 

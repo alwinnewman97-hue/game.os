@@ -757,24 +757,6 @@ export default function App() {
             <div className="flex items-center gap-4 z-10">
               <button
                 onClick={() => {
-                  const nextTheme =
-                    store.theme === "dark" || store.theme === "trevor"
-                      ? "light"
-                      : "dark";
-                  store.setTheme(nextTheme);
-                  if (store.soundEnabled) playClickSound("click");
-                }}
-                className="p-2.5 rounded-xl theme-bg-card border theme-border theme-text-sec hover:theme-text-main transition-colors shadow-sm"
-              >
-                {store.theme === "dark" || store.theme === "trevor" ? (
-                  <Sun size={18} />
-                ) : (
-                  <Moon size={18} />
-                )}
-              </button>
-
-              <button
-                onClick={() => {
                   const nextSpeed = store.gameSpeed === 0 ? 1 : 0;
                   store.setGameSpeed(nextSpeed);
                   if (store.soundEnabled) playClickSound("click");

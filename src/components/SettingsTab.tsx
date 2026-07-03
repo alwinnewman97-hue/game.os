@@ -98,37 +98,6 @@ export default function SettingsTab({ store }: SettingsTabProps) {
         Multiversal Settings
       </h2>
 
-      {/* VISUAL THEME PANEL */}
-      <div className={`p-6 rounded-2xl theme-bg-panel theme-border border transition-all duration-350 ${
-        store.theme === 'trevor' 
-          ? 'bg-[#192026] border-[#39ff14]/30 shadow-[0_0_15px_rgba(57,255,20,0.08)]' 
-          : 'theme-border'
-      }`}>
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h3 className={`text-sm font-black uppercase tracking-widest flex items-center gap-1.5 ${
-              store.theme === 'trevor' ? 'text-[#39ff14]' : 'theme-text-main'
-            }`}>
-              <Palette size={15} className={store.theme === 'trevor' ? 'animate-pulse' : ''} />
-              Trevor Theme
-            </h3>
-            <p className="text-xs theme-text-muted mt-1">
-              Enable the Rick and Morty sci-fi color scheme across the entire multiverse interface.
-            </p>
-          </div>
-          <button
-            onClick={() => store.setTheme(store.theme === 'trevor' ? 'dark' : 'trevor')}
-            className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer ${
-              store.theme === 'trevor' 
-                ? 'bg-[#39ff14] text-black shadow-lg border border-[#39ff14]' 
-                : 'theme-bg-card theme-text-muted hover:theme-text-main theme-border border'
-            }`}
-          >
-            {store.theme === 'trevor' ? 'ACTIVE' : 'INACTIVE'}
-          </button>
-        </div>
-      </div>
-
       {/* DISASTER / INSANE DIFFICULTY MASTER PANEL */}
       <div className={`p-6 rounded-2xl theme-bg-panel theme-border border transition-all duration-350 ${
         store.insaneMode 
