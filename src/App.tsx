@@ -224,9 +224,7 @@ export default function App() {
   // Rates formulas mirror store tick perfectly for pixel-perfect UI synchronization
   const farmerEffBonus = store.researched.agriculture ? 1.2 : 1.0;
   const agricultureGreenhouseBonus = store.researched.agriculture ? 1.25 : 1.0;
-  let dimensionModifier = store.researched.calendar
-    ? DIMENSIONS_DATA[store.currentDimension].catnipModifier
-    : 1.0;
+  let dimensionModifier = DIMENSIONS_DATA[store.currentDimension].catnipModifier;
 
   if (store.insaneMode && store.currentDimension === "Froopyland") {
     dimensionModifier = store.upgrades.portalHeaters ? 0.35 : 0.05;
@@ -319,8 +317,8 @@ export default function App() {
     const smeltersCount = store.buildings.smelter;
     // Smelters consume raw mats to output iron
     if (
-      (store.resources.wood?.amount ?? 0) > 0 &&
-      (store.resources.minerals?.amount ?? 0) > 0
+      (store.resources.wood?.amount ?? 0) >= smeltersCount * 1.0 &&
+      (store.resources.minerals?.amount ?? 0) >= smeltersCount * 10.0
     ) {
       computedWoodRate -= smeltersCount * 1.0;
       computedMineralsRate -= smeltersCount * 10.0;

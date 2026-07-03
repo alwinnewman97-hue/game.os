@@ -839,26 +839,6 @@ export const useGameStore = create<GameState>()(
           }
         }
 
-        // Clamping amounts to max
-        catnipAmt = Math.min(catnipAmt, maxCatnip);
-        woodAmt = Math.min(woodAmt, maxWood);
-        mineralsAmt = Math.min(mineralsAmt, maxMinerals);
-        ironAmt = Math.min(ironAmt, maxIron);
-        scienceAmt = Math.min(scienceAmt, maxScience);
-        darkMatterAmt = Math.min(darkMatterAmt, maxDarkMatter);
-        portalFluidAmt = Math.min(portalFluidAmt, maxPortalFluid);
-        // Culture does not have a hard ceiling in standard kittens, let's cap at 10000 set in state
-        cultureAmt = Math.min(cultureAmt, 100000);
-
-        // Ensure positive bottom values
-        if (woodAmt < 0) woodAmt = 0;
-        if (mineralsAmt < 0) mineralsAmt = 0;
-        if (scienceAmt < 0) scienceAmt = 0;
-        if (ironAmt < 0) ironAmt = 0;
-        if (cultureAmt < 0) cultureAmt = 0;
-        if (darkMatterAmt < 0) darkMatterAmt = 0;
-        if (portalFluidAmt < 0) portalFluidAmt = 0;
-
         // Auto-build
         const updatedBuildings = { ...state.buildings };
         const autoBuildable = ['pasture', 'barn', 'catnipField'] as const;
@@ -905,6 +885,56 @@ export const useGameStore = create<GameState>()(
           }
         });
 
+        // Recalculate max capacities in case autoBuild changed them
+        let finalMaxCatnip = 2000 + (updatedBuildings.pasture * 500) + (updatedBuildings.barn * 2500 * barnMultiplier);
+        if (state.upgrades.catnipSilos) finalMaxCatnip *= 1.5;
+
+        let finalMaxWood = 200 + (updatedBuildings.barn * 200 * barnMultiplier) + (updatedBuildings.warehouse * 150 * warehouseMultiplier);
+        let finalMaxMinerals = (updatedBuildings.barn * 250 * barnMultiplier) + (updatedBuildings.warehouse * 500 * warehouseMultiplier);
+        let finalMaxIron = (updatedBuildings.barn * 50 * barnMultiplier) + (updatedBuildings.warehouse * 150 * warehouseMultiplier);
+        let finalMaxScience = (updatedBuildings.library * 250) + (updatedBuildings.academy * 1000) + (updatedBuildings.warehouse * 100 * warehouseMultiplier);
+        let finalMaxDarkMatter = 0 + (state.upgrades.darkMatterContainment ? 500 : 0);
+        let finalMaxPortalFluid = 0 + (state.upgrades.fluidTanks ? 250 : 0);
+
+        finalMaxCatnip *= storageMultiplier;
+        finalMaxWood *= storageMultiplier;
+        finalMaxMinerals *= storageMultiplier;
+        finalMaxIron *= storageMultiplier;
+        finalMaxScience *= storageMultiplier;
+        finalMaxDarkMatter *= storageMultiplier;
+        finalMaxPortalFluid *= storageMultiplier;
+
+        if (microverseDecayActive) {
+          finalMaxCatnip *= 0.5;
+          finalMaxWood *= 0.5;
+          finalMaxMinerals *= 0.5;
+          finalMaxIron *= 0.5;
+          finalMaxScience *= 0.5;
+          finalMaxDarkMatter *= 0.5;
+          finalMaxPortalFluid *= 0.5;
+        }
+
+        // Clamping amounts to max
+        catnipAmt = Math.min(catnipAmt, finalMaxCatnip);
+        woodAmt = Math.min(woodAmt, finalMaxWood);
+        mineralsAmt = Math.min(mineralsAmt, finalMaxMinerals);
+        ironAmt = Math.min(ironAmt, finalMaxIron);
+        scienceAmt = Math.min(scienceAmt, finalMaxScience);
+        darkMatterAmt = Math.min(darkMatterAmt, finalMaxDarkMatter);
+        portalFluidAmt = Math.min(portalFluidAmt, finalMaxPortalFluid);
+
+        // Culture does not have a hard ceiling in standard kittens, let's cap at 100000
+        cultureAmt = Math.min(cultureAmt, 100000);
+
+        // Ensure positive bottom values
+        if (woodAmt < 0) woodAmt = 0;
+        if (mineralsAmt < 0) mineralsAmt = 0;
+        if (scienceAmt < 0) scienceAmt = 0;
+        if (ironAmt < 0) ironAmt = 0;
+        if (cultureAmt < 0) cultureAmt = 0;
+        if (darkMatterAmt < 0) darkMatterAmt = 0;
+        if (portalFluidAmt < 0) portalFluidAmt = 0;
+
         // 5. Unlocks Checks
         const unlocks = { ...state.unlocks };
         if (!unlocks.wood && (catnipAmt >= 100 || state.buildings.catnipField > 0)) unlocks.wood = true;
@@ -934,7 +964,13 @@ export const useGameStore = create<GameState>()(
         if (hungerState && updatedKittens.length > 0) {
           const baseRisk = state.insaneMode ? 0.15 : 0.05;
           const starvationRisk = baseRisk * effectiveDelta;
-          if (Math.random() < starvationRisk) {
+          let deathCount = Math.floor(starvationRisk);
+          if (Math.random() < (starvationRisk - deathCount)) {
+            deathCount++;
+          }
+          deathCount = Math.min(deathCount, updatedKittens.length);
+          
+          for (let i = 0; i < deathCount; i++) {
             const deceased = updatedKittens.pop();
             if (deceased) {
               state.addLog(
@@ -948,7 +984,13 @@ export const useGameStore = create<GameState>()(
         // Recruit new kitten logic (every few seconds, with probability scaled by happiness & free space)
         if (updatedKittens.length < maxKittens && catnipAmt > (maxCatnip * 0.12) && !hungerState) {
           const spawnWeight = 0.02 * (finalHappiness / 100) * effectiveDelta;
-          if (Math.random() < spawnWeight) {
+          let spawnCount = Math.floor(spawnWeight);
+          if (Math.random() < (spawnWeight - spawnCount)) {
+            spawnCount++;
+          }
+          spawnCount = Math.min(spawnCount, maxKittens - updatedKittens.length);
+          
+          for (let i = 0; i < spawnCount; i++) {
             const newKitty = generateRandomKitten();
             updatedKittens.push(newKitty);
             state.addLog(
@@ -1632,15 +1674,11 @@ export const useGameStore = create<GameState>()(
             fluid: false
           },
           autoBuild: {
-            hut: false,
-            logHouse: false,
-            mansion: false,
             pasture: false,
             barn: false,
-            warehouse: false,
-            port: false,
             catnipField: false,
-          } as any,
+          },
+          activeAnomaly: null,
           dimensionEnterTime: Date.now(),
           currentDimension: 'EarthC137',
           portalResets: 0,
