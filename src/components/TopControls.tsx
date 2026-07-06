@@ -19,7 +19,8 @@ export default function TopControls({ store }: TopControlsProps) {
     const portalFluxMultiplier = 1 + ((store.portalFlux || 0) * 0.1);
     const dimAmplifierLevel = store.portalUpgrades?.dimensionalAmplifier ?? 0;
     const dimensionalMultiplier = 1 + (dimAmplifierLevel * 0.15);
-    const baseGain = Math.max(1, Math.round(1 * portalFluxMultiplier * dimensionalMultiplier));
+    const fieldScaler = 1 + ((store.buildings?.catnipField || 0) * 0.5);
+    const baseGain = Math.max(1, Math.round(1 * portalFluxMultiplier * dimensionalMultiplier * fieldScaler));
 
     const catnipAmount = store.resources.catnip?.amount ?? 0;
     const catnipMax = store.resources.catnip?.max ?? 0;

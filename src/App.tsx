@@ -36,8 +36,7 @@ import TopControls from "./components/TopControls";
 import ResourcePanel from "./components/ResourcePanel";
 import BonfireTab from "./components/BonfireTab";
 import TownTab from "./components/TownTab";
-import ScienceTab from "./components/ScienceTab";
-import UpgradesTab from "./components/UpgradesTab";
+import TechTab from "./components/TechTab";
 import AchievementsTab from "./components/AchievementsTab";
 import SettingsTab from "./components/SettingsTab";
 import LeaderboardTab from "./components/LeaderboardTab";
@@ -57,6 +56,13 @@ export default function App() {
     null,
   );
   const [showSplash, setShowSplash] = useState(true);
+
+  // Automatically default mobile players to compact density on load
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      store.setDensity("compact");
+    }
+  }, []);
 
   // Custom layout view togglers to manage display density - collapsed on small mobile screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
@@ -416,9 +422,8 @@ export default function App() {
       case "town":
         return <TownTab store={store} />;
       case "science":
-        return <ScienceTab store={store} />;
       case "upgrades":
-        return <UpgradesTab store={store} />;
+        return <TechTab store={store} />;
       case "achievements":
         return <AchievementsTab store={store} />;
       case "leaderboard":
@@ -527,12 +532,12 @@ export default function App() {
       {/* AWWWARDS-STYLE SIDE NAVIGATION DOCK */}
       <nav className="fixed md:static bottom-2 left-2 right-2 md:inset-y-0 md:left-0 z-50 md:w-28 md:h-screen theme-bg-app md:bg-transparent backdrop-blur-3xl md:backdrop-blur-none border theme-border md:border-none md:border-r theme-border rounded-[1.5rem] md:rounded-none flex flex-row md:flex-col items-center justify-between p-1.5 md:py-8 shadow-2xl md:shadow-none shrink-0">
         {/* Top items: Logo and Primary Tabs */}
-        <div className="flex flex-row md:flex-col items-center gap-1 md:gap-6 w-full">
+        <div className="flex flex-row md:flex-col items-center gap-1 md:gap-6 flex-1 md:flex-initial min-w-0 w-full">
           <div className="hidden md:flex items-center justify-center w-14 h-14 rounded-2xl theme-bg-card border theme-border mb-4 shadow-[0_0_30px_rgba(255,255,255,0.03)] opacity-80 hover:opacity-100 transition-opacity">
             <Flame size={24} className="theme-text-main" />
           </div>
 
-          <div className="flex flex-row md:flex-col gap-1.5 md:gap-1.5 w-full overflow-x-auto scrollbar-none justify-start md:justify-start px-2 md:px-4 shrink-0 pb-1 md:pb-0">
+          <div className="flex flex-row md:flex-col gap-1.5 md:gap-1.5 w-full overflow-x-auto scrollbar-none justify-start md:justify-start px-2 md:px-4 md:shrink-0 pb-1 md:pb-0">
             <button
               onClick={() => handleTabChange("bonfire")}
               className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
@@ -583,11 +588,11 @@ export default function App() {
               </button>
             )}
 
-            {store.unlocks.science && (
+            {(store.unlocks.science || store.unlocks.workshop) && (
               <button
                 onClick={() => handleTabChange("science")}
                 className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                  activeTab === "science"
+                  activeTab === "science" || activeTab === "upgrades"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
                 }`}
@@ -595,41 +600,15 @@ export default function App() {
                 <FlaskConical
                   size={18}
                   className={
-                    activeTab === "science"
+                    activeTab === "science" || activeTab === "upgrades"
                       ? "text-emerald-400 animate-pulse"
                       : "theme-text-muted"
                   }
                 />
                 <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
-                  Labs
+                  Tech Labs
                 </span>
-                {activeTab === "science" && (
-                  <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
-                )}
-              </button>
-            )}
-
-            {store.unlocks.workshop && (
-              <button
-                onClick={() => handleTabChange("upgrades")}
-                className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
-                  activeTab === "upgrades"
-                    ? "portal-tab-btn-active scale-100"
-                    : "theme-text-muted scale-95"
-                }`}
-              >
-                <Hammer
-                  size={18}
-                  className={
-                    activeTab === "upgrades"
-                      ? "text-emerald-400 animate-pulse"
-                      : "theme-text-muted"
-                  }
-                />
-                <span className="text-[9px] md:text-[10px] hidden md:block font-sans">
-                  Upgrades
-                </span>
-                {activeTab === "upgrades" && (
+                {(activeTab === "science" || activeTab === "upgrades") && (
                   <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
                 )}
               </button>
@@ -637,7 +616,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("achievements")}
-              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative hidden md:flex ${
                 activeTab === "achievements"
                   ? "portal-tab-btn-active scale-100"
                   : "text-[#39ff14]/90 scale-95"
@@ -661,7 +640,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("leaderboard")}
-              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative hidden md:flex ${
                 activeTab === "leaderboard"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -685,7 +664,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("settings")}
-              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative hidden md:flex ${
                 activeTab === "settings"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -706,17 +685,50 @@ export default function App() {
                 <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] md:left-0 md:top-4 md:bottom-4 md:w-[3px] md:h-auto rounded-full" />
               )}
             </button>
+
+            {/* Combined Mobile System Button */}
+            <button
+              onClick={() => {
+                if (activeTab === "achievements") {
+                  handleTabChange("leaderboard");
+                } else if (activeTab === "leaderboard") {
+                  handleTabChange("settings");
+                } else {
+                  handleTabChange("achievements");
+                }
+              }}
+              className={`px-3 py-2 sm:px-3 sm:py-3 min-w-[65px] sm:min-w-[80px] shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative md:hidden ${
+                ["achievements", "leaderboard", "settings"].includes(activeTab)
+                  ? "portal-tab-btn-active scale-100"
+                  : "theme-text-muted scale-95"
+              }`}
+            >
+              <Settings2
+                size={18}
+                className={
+                  ["achievements", "leaderboard", "settings"].includes(activeTab)
+                    ? "text-emerald-400 animate-pulse"
+                    : "theme-text-muted"
+                }
+              />
+              <span className="text-[9px] font-sans">
+                System
+              </span>
+              {["achievements", "leaderboard", "settings"].includes(activeTab) && (
+                <div className="portal-tab-indicator absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] rounded-full" />
+              )}
+            </button>
           </div>
         </div>
 
         {/* Bottom items: Utilities */}
-        <div className="flex flex-row md:flex-col items-center gap-3 md:gap-4 md:mt-auto pr-3 md:pr-0">
+        <div className="hidden sm:flex flex-row md:flex-col items-center gap-3 md:gap-4 md:mt-auto pr-3 md:pr-0">
           <button
             onClick={() => {
               store.toggleSound();
               if (!store.soundEnabled) playClickSound("success");
             }}
-            className="p-2.5 rounded-xl theme-text-muted hover:theme-text-sec transition-colors hidden sm:block"
+            className="p-2.5 rounded-xl theme-text-muted hover:theme-text-sec transition-colors"
           >
             {store.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
           </button>
@@ -745,11 +757,13 @@ export default function App() {
                 ? "Citadel"
                 : activeTab === "town"
                   ? "Clone Bay"
-                  : activeTab === "science"
-                    ? "Labs"
-                    : activeTab === "upgrades"
-                      ? "Upgrades"
-                      : "Badges"}
+                  : activeTab === "science" || activeTab === "upgrades"
+                    ? "Tech Labs"
+                      : activeTab === "achievements"
+                        ? "Badges"
+                        : activeTab === "leaderboard"
+                          ? "Rank"
+                          : "Settings"}
             </h1>
             {/* Spacing element to push controls to the right */}
             <div className="flex-1"></div>
@@ -864,6 +878,42 @@ export default function App() {
                   portalFluidRate={computedPortalFluidRate}
                 />
               </div>
+
+              {/* MOBILE SUB-TAB SWITCHER FOR SYSTEM MENU */}
+              {["achievements", "leaderboard", "settings"].includes(activeTab) && (
+                <div className="flex md:hidden items-center justify-around theme-bg-card border theme-border rounded-xl p-1 mb-4 gap-1 shadow-sm">
+                  <button
+                    onClick={() => handleTabChange("achievements")}
+                    className={`flex-1 py-2 px-1 text-center rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      activeTab === "achievements"
+                        ? "bg-emerald-500/10 border border-emerald-500/20 theme-text-main font-bold"
+                        : "theme-text-muted hover:theme-text-sec"
+                    }`}
+                  >
+                    Badges
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("leaderboard")}
+                    className={`flex-1 py-2 px-1 text-center rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      activeTab === "leaderboard"
+                        ? "bg-emerald-500/10 border border-emerald-500/20 theme-text-main font-bold"
+                        : "theme-text-muted hover:theme-text-sec"
+                    }`}
+                  >
+                    Rank
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("settings")}
+                    className={`flex-1 py-2 px-1 text-center rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      activeTab === "settings"
+                        ? "bg-emerald-500/10 border border-emerald-500/20 theme-text-main font-bold"
+                        : "theme-text-muted hover:theme-text-sec"
+                    }`}
+                  >
+                    Settings
+                  </button>
+                </div>
+              )}
 
               <AnimatePresence mode="wait">
                 <motion.div

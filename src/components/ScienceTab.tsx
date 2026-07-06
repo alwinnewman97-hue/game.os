@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameState, ScienceType, ResourceType, PortalUpgradeType } from '../types';
 import { SCIENCES, PORTAL_UPGRADES } from '../gameData';
 import { playClickSound, triggerHaptic } from '../utils/audio';
-import { FlaskConical, Check, Sparkles, BookOpen, GraduationCap, Compass, Microscope, Clock, Zap, Atom } from 'lucide-react';
+import { FlaskConical, Check, Sparkles, BookOpen, GraduationCap, Compass, Microscope, Clock, Zap, Atom, Info } from 'lucide-react';
 
 interface ScienceTabProps {
   store: GameState;
 }
 
 export default function ScienceTab({ store }: ScienceTabProps) {
+  const [openInfo, setOpenInfo] = useState<Record<string, boolean>>({});
   const isCompact = store.density === 'compact';
 
   const handleResearch = (type: ScienceType) => {
@@ -134,6 +135,17 @@ export default function ScienceTab({ store }: ScienceTabProps) {
                     }`}>
                       {s.name}
                     </h4>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenInfo(prev => ({ ...prev, [id]: !prev[id] }));
+                        triggerHaptic('click');
+                      }}
+                      className="p-1 rounded-full text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer inline-flex items-center justify-center shrink-0"
+                      title="View description"
+                    >
+                      <Info size={11} />
+                    </button>
                   </div>
                   
                   {isResearched ? (
@@ -145,11 +157,13 @@ export default function ScienceTab({ store }: ScienceTabProps) {
                   )}
                 </div>
 
-                <p className={`theme-text-muted font-sans leading-relaxed hidden sm:block ${
-                  isCompact ? 'text-[11px] leading-snug mt-0.5' : 'text-xs'
-                }`}>
-                  {s.desc}
-                </p>
+                {(!isCompact || openInfo[id]) && (
+                  <p className={`theme-text-muted font-sans leading-relaxed transition-all ${
+                    isCompact ? 'text-[11px] leading-snug mt-0.5' : 'text-xs'
+                  }`}>
+                    {s.desc}
+                  </p>
+                )}
 
                 {/* Unified Unlocks Row */}
                 <div className={`flex items-start gap-1 text-emerald-400 font-mono transition-all ${
@@ -238,11 +252,24 @@ export default function ScienceTab({ store }: ScienceTabProps) {
                           {getPortalUpgradeIcon(id)}
                         </span>
                         <div className="flex flex-col">
-                          <h4 className={`font-bold theme-text-main tracking-wide transition-all ${
-                            isCompact ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'
-                          }`}>
-                            {u.name}
-                          </h4>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className={`font-bold theme-text-main tracking-wide transition-all ${
+                              isCompact ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'
+                            }`}>
+                              {u.name}
+                            </h4>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenInfo(prev => ({ ...prev, [id]: !prev[id] }));
+                                triggerHaptic('click');
+                              }}
+                              className="p-1 rounded-full text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer inline-flex items-center justify-center shrink-0"
+                              title="View description"
+                            >
+                              <Info size={11} />
+                            </button>
+                          </div>
                           <span className="text-[10px] theme-text-muted font-mono leading-none">
                             Current Level: <span className="text-emerald-400 font-bold">{currentLevel}</span>
                           </span>
@@ -254,11 +281,13 @@ export default function ScienceTab({ store }: ScienceTabProps) {
                       </span>
                     </div>
 
-                    <p className={`theme-text-muted font-sans leading-relaxed hidden sm:block ${
-                      isCompact ? 'text-[11px] leading-snug mt-0.5' : 'text-xs'
-                    }`}>
-                      {u.desc}
-                    </p>
+                    {(!isCompact || openInfo[id]) && (
+                      <p className={`theme-text-muted font-sans leading-relaxed transition-all ${
+                        isCompact ? 'text-[11px] leading-snug mt-0.5' : 'text-xs'
+                      }`}>
+                        {u.desc}
+                      </p>
+                    )}
 
                     <div className={`flex items-start gap-1 text-emerald-400 font-mono transition-all ${
                       isCompact ? 'mt-0.5 text-[9px]' : 'mt-1 text-[10px]'

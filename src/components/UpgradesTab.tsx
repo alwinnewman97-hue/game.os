@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameState, UpgradeType, ResourceType } from '../types';
 import { UPGRADES } from '../gameData';
 import { playClickSound, triggerHaptic } from '../utils/audio';
@@ -15,7 +15,8 @@ import {
   Sparkles,
   Clock,
   Zap,
-  Award
+  Award,
+  Info
 } from 'lucide-react';
 
 interface UpgradesTabProps {
@@ -23,6 +24,7 @@ interface UpgradesTabProps {
 }
 
 export default function UpgradesTab({ store }: UpgradesTabProps) {
+  const [openInfo, setOpenInfo] = useState<Record<string, boolean>>({});
   const isCompact = store.density === 'compact';
 
   const handleBuyUpgrade = (id: UpgradeType) => {
@@ -110,9 +112,22 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
                 >
                   <div className={`flex flex-col ${isCompact ? 'gap-1' : 'gap-2'}`}>
                     <div className="flex justify-between items-start gap-2">
-                      <h4 className={`font-bold theme-text-main tracking-wide transition-all ${
-                        isCompact ? 'text-xs sm:text-sm' : 'text-sm'
-                      }`}>{u.name}</h4>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className={`font-bold theme-text-main tracking-wide transition-all ${
+                          isCompact ? 'text-xs sm:text-sm' : 'text-sm'
+                        }`}>{u.name}</h4>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenInfo(prev => ({ ...prev, [id]: !prev[id] }));
+                            triggerHaptic('click');
+                          }}
+                          className="p-1 rounded-full text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer inline-flex items-center justify-center shrink-0"
+                          title="View description"
+                        >
+                          <Info size={11} />
+                        </button>
+                      </div>
                       {isOwned && (
                         <span className="px-1.5 py-0.2 border border-emerald-500/10 text-[#39ff14]/80 text-[8px] uppercase tracking-wider font-bold rounded bg-emerald-500/5 font-sans">
                           Acquired
@@ -120,7 +135,13 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
                       )}
                     </div>
                     
-                    <p className={`theme-text-muted font-sans leading-relaxed transition-all ${
+                    {(!isCompact || openInfo[id]) && u.desc && (
+                      <p className={`theme-text-muted font-sans italic leading-relaxed transition-all ${
+                        isCompact ? 'text-[10px] leading-snug' : 'text-xs'
+                      }`}>{u.desc}</p>
+                    )}
+
+                    <p className={`text-emerald-400 font-mono transition-all ${
                       isCompact ? 'text-[11px] leading-snug' : 'text-xs'
                     }`}>{u.effectsDesc}</p>
                   </div>
@@ -170,9 +191,9 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
               <div className="flex items-center gap-3">
                 <span className="text-2xl p-1.5 theme-bg-app rounded-lg">🛖</span>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold theme-text-main text-sm">Auto-Build Pasture</span>
+                  <span className="font-bold theme-text-main text-sm">Auto-Build Morty Play-Pen</span>
                   <span className="text-[10px] theme-text-muted max-w-[200px] leading-tight mt-1">
-                    Automatically consume Mega Seeds and Plutonium to construct Pastures when resources are available.
+                    Automatically consume Mega Seeds and Plutonium to construct Morty Play-Pens when resources are available.
                   </span>
                 </div>
               </div>
@@ -196,9 +217,9 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
               <div className="flex items-center gap-3">
                 <span className="text-2xl p-1.5 theme-bg-app rounded-lg">📦</span>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold theme-text-main text-sm">Auto-Build Barn</span>
+                  <span className="font-bold theme-text-main text-sm">Auto-Build Dimension Vault</span>
                   <span className="text-[10px] theme-text-muted max-w-[200px] leading-tight mt-1">
-                    Automatically consumes Plutonium to construct Barns when resources are available to increase storage.
+                    Automatically consumes Plutonium to construct Dimension Vaults when resources are available to increase storage.
                   </span>
                 </div>
               </div>
@@ -226,11 +247,11 @@ export default function UpgradesTab({ store }: UpgradesTabProps) {
               <div className="flex items-center gap-3">
                 <span className="text-2xl p-1.5 theme-bg-app rounded-lg">{store.researched.agriculture ? '🌱' : '🔒'}</span>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold theme-text-main text-sm">Auto-Build Greenhouse</span>
+                  <span className="font-bold theme-text-main text-sm">Auto-Build Mega-Seed Greenhouse</span>
                   <span className="text-[10px] theme-text-muted max-w-[200px] leading-tight mt-1">
                     {!store.researched.agriculture 
                       ? 'Requires Seed Bio-Cloning (Agriculture) Research to unlock.' 
-                      : 'Automatically consume Mega Seeds to construct Greenhouses when resources are available.'}
+                      : 'Automatically consume Mega Seeds to construct Mega-Seed Greenhouses when resources are available.'}
                   </span>
                 </div>
               </div>

@@ -91,12 +91,12 @@ export const DAY_DURATION_IN_GAME_SEC = 5; // 1 in-game day = 5 real-life second
 const BASE_RESOURCES: Record<ResourceType, { amount: number; max: number }> = {
   catnip: { amount: 50, max: 2000 },
   wood: { amount: 0, max: 200 },
-  minerals: { amount: 0, max: 0 },
-  iron: { amount: 0, max: 0 },
-  science: { amount: 0, max: 0 },
-  culture: { amount: 0, max: 0 },
-  darkMatter: { amount: 0, max: 0 },
-  portalFluid: { amount: 0, max: 0 },
+  minerals: { amount: 0, max: 500 },
+  iron: { amount: 0, max: 200 },
+  science: { amount: 0, max: 1000 },
+  culture: { amount: 0, max: 1000 },
+  darkMatter: { amount: 0, max: 100 },
+  portalFluid: { amount: 0, max: 50 },
   flurbo: { amount: 0, max: 1000 }
 };
 
@@ -264,7 +264,7 @@ export const useGameStore = create<GameState>()(
       logs: initialLogs,
       theme: 'dark',
       buyMultiplier: 1,
-      insaneMode: true,
+      insaneMode: false,
       density: 'relaxed',
       activeAnomaly: null,
       autoBuild: {
@@ -573,12 +573,12 @@ export const useGameStore = create<GameState>()(
         if (state.upgrades.catnipSilos) maxCatnip *= 1.5;
 
         let maxWood = 200 + (state.buildings.barn * 200 * barnMultiplier) + (state.buildings.warehouse * 150 * warehouseMultiplier);
-        let maxMinerals = (state.buildings.barn * 250 * barnMultiplier) + (state.buildings.warehouse * 500 * warehouseMultiplier);
-        let maxIron = (state.buildings.barn * 50 * barnMultiplier) + (state.buildings.warehouse * 150 * warehouseMultiplier);
-        let maxScience = (state.buildings.library * 250) + (state.buildings.academy * 1000) + (state.buildings.warehouse * 100 * warehouseMultiplier);
+        let maxMinerals = 500 + (state.buildings.barn * 250 * barnMultiplier) + (state.buildings.warehouse * 500 * warehouseMultiplier);
+        let maxIron = 200 + (state.buildings.barn * 50 * barnMultiplier) + (state.buildings.warehouse * 150 * warehouseMultiplier);
+        let maxScience = 1000 + (state.buildings.library * 250) + (state.buildings.academy * 1000) + (state.buildings.warehouse * 100 * warehouseMultiplier);
         
-        let maxDarkMatter = 0 + (state.upgrades.darkMatterContainment ? 500 : 0);
-        let maxPortalFluid = 0 + (state.upgrades.fluidTanks ? 250 : 0);
+        let maxDarkMatter = 100 + (state.upgrades.darkMatterContainment ? 500 : 0);
+        let maxPortalFluid = 50 + (state.upgrades.fluidTanks ? 250 : 0);
 
         const fluxAcceleratorLevel = state.portalUpgrades?.fluxAccelerator ?? 0;
         const storageMultiplier = 1 + (fluxAcceleratorLevel * 0.20);
@@ -960,24 +960,14 @@ export const useGameStore = create<GameState>()(
         //6. Kitten Survival & Recruitment
         
         // Starvation logic checks
-        // If hunger and kittens exist, there is a small risk they run away or die! (e.g. 1.2% chance per active starving tick)
+        // In simple/linear standard mode, clones are resilient and do not die or leave!
+        // Instead, we just print a gentle warning log occasionally so the player is alerted.
         if (hungerState && updatedKittens.length > 0) {
-          const baseRisk = state.insaneMode ? 0.15 : 0.05;
-          const starvationRisk = baseRisk * effectiveDelta;
-          let deathCount = Math.floor(starvationRisk);
-          if (Math.random() < (starvationRisk - deathCount)) {
-            deathCount++;
-          }
-          deathCount = Math.min(deathCount, updatedKittens.length);
-          
-          for (let i = 0; i < deathCount; i++) {
-            const deceased = updatedKittens.pop();
-            if (deceased) {
-              state.addLog(
-                `Unfortunate tragedy! ${deceased.name} ${deceased.surname} ran dry on seeds and suffered agonizing withdrawal. Cultivate Mega Seeds immediately!`, 
-                'death'
-              );
-            }
+          if (Math.random() < 0.10 * effectiveDelta) {
+            state.addLog(
+              `⚠️ Clone Shortage Warning: Mortys are starving! Job efficiency is down. Grow more Mega-Seeds immediately!`,
+              'warn'
+            );
           }
         }
 
@@ -1133,11 +1123,12 @@ export const useGameStore = create<GameState>()(
       },
 
       gatherCatnip: (multiplier: number = 1) => set(state => {
-        // Gathering catnip manually is highly customizable, and is boosted by portal flux and dimensional upgrades!
+        // Gathering catnip manually is highly customizable, and is boosted by portal flux, dimensional upgrades, and active greenhouses!
         const portalFluxMultiplier = 1 + (state.portalFlux * 0.1);
         const dimAmplifierLevel = state.portalUpgrades?.dimensionalAmplifier ?? 0;
         const dimensionalMultiplier = 1 + (dimAmplifierLevel * 0.15);
-        const finalMultiplier = multiplier * portalFluxMultiplier * dimensionalMultiplier;
+        const fieldScaler = 1 + (state.buildings.catnipField * 0.5);
+        const finalMultiplier = multiplier * portalFluxMultiplier * dimensionalMultiplier * fieldScaler;
         const gainedAmount = Math.max(1, Math.round(1 * finalMultiplier));
 
         const amt = Math.min(

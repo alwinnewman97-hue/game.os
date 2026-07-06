@@ -51,7 +51,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Portal Irrigation Pipe',
     desc: 'An advanced inter-dimensional hydration array. Boosts passive Mega Seed output by +25% per pipe. Max limit: 50.',
     baseCost: { catnip: 150, wood: 25 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'production',
     maxLimit: 50
   },
@@ -59,7 +59,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Morty Play-Pen',
     desc: 'Reduces individual Morty seed consumption rate by -0.15% (up to -50% total) by decreasing their anxiety levels. Max limit: 40.',
     baseCost: { catnip: 250, wood: 50 },
-    costRatio: 1.18,
+    costRatio: 1.12,
     category: 'production',
     maxLimit: 40
   },
@@ -67,7 +67,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Garage Laboratory',
     desc: 'Provides a workbench and standard camping quarters for up to 2 Mortys. Max limit: 15.',
     baseCost: { catnip: 150 },
-    costRatio: 2.50,
+    costRatio: 1.15,
     category: 'residential',
     maxLimit: 15
   },
@@ -75,7 +75,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Citadel Dormitory',
     desc: 'A high-density capsule accommodation unit providing comfortable lodgings for 1 Morty. Max limit: 30.',
     baseCost: { wood: 150, minerals: 60 },
-    costRatio: 1.15, // standard build ratio
+    costRatio: 1.12, // standard build ratio
     category: 'residential',
     maxLimit: 30
   },
@@ -83,7 +83,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Citadel Luxury Manor',
     desc: 'An upscale, portal-secured estate for top-tier Mortys. Provides spaces for up to 4 Mortys. Max limit: 10.',
     baseCost: { wood: 800, minerals: 450, iron: 120 },
-    costRatio: 1.25,
+    costRatio: 1.12,
     category: 'residential',
     maxLimit: 10
   },
@@ -91,7 +91,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Dimension Vault',
     desc: 'Expands maximum containment capacities of Mega Seeds (+5,000), Plutonium (+200), Kalaxian Crystals (+200), and Neutrium (+50). Max limit: 60.',
     baseCost: { wood: 50 },
-    costRatio: 1.75,
+    costRatio: 1.15,
     category: 'storage',
     maxLimit: 60
   },
@@ -99,7 +99,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Microverse Depot',
     desc: 'Sub-atomic containment unit. Expands Plutonium (+150), Crystals (+500), and Neutrium (+150). Increases Forbidden Tech capacity (+100). Max limit: 45.',
     baseCost: { wood: 150, minerals: 100 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'storage',
     maxLimit: 45
   },
@@ -107,7 +107,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: "Rick's Cyber-Terminal",
     desc: "A modified terminal linked to Citadel files. Increments Forbidden Tech/Science capacity (+250). Max limit: 55.",
     baseCost: { wood: 25 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'scientific',
     maxLimit: 55
   },
@@ -115,7 +115,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Morty Academy',
     desc: 'An institute to instruct Mortys. Increases Forbidden Tech limit (+1,000) and boosts scholar Morty productivity (+20% each). Max limit: 35.',
     baseCost: { wood: 250, minerals: 150, iron: 20 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'scientific',
     maxLimit: 35
   },
@@ -123,7 +123,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Kalaxian Fault',
     desc: 'Harvests crystalline Kalaxian shards from deep meteor fault lines, providing passives & unlocking extraction jobs. Max limit: 50.',
     baseCost: { wood: 100 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'production',
     maxLimit: 50
   },
@@ -131,7 +131,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Neutrium Reactor',
     desc: 'Cold-fusion furnace. Consumes -1.0 Plutonium & -10 Kalaxian Crystals/s, but produces +0.18 Neutrium/s. Max limit: 25.',
     baseCost: { minerals: 200 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'production',
     maxLimit: 25
   },
@@ -139,7 +139,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Schwifty Stage',
     desc: 'GET SCHWIFTY! Boosts global Morty happiness (+4% each) and dampens population existential dread. Max limit: 20.',
     baseCost: { wood: 150, minerals: 50, iron: 10 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'residential',
     maxLimit: 20
   },
@@ -147,7 +147,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Dark Matter Extractor',
     desc: 'Extracts volatile dark matter from the vacuum of space. Max limit: 15.',
     baseCost: { iron: 1500, science: 2500 },
-    costRatio: 1.15,
+    costRatio: 1.12,
     category: 'production',
     maxLimit: 15
   },
@@ -155,7 +155,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Operation Phoenix Vat',
     desc: 'Advanced cloning vat. Increases maximum Morty limit by +50. Consumes dark matter to run. Max limit: 10.',
     baseCost: { iron: 3000, minerals: 5000 },
-    costRatio: 1.25,
+    costRatio: 1.12,
     category: 'residential',
     maxLimit: 10
   },
@@ -163,7 +163,7 @@ export const BUILDINGS: Record<BuildingType, BuildingDef> = {
     name: 'Portal Fluid Generator',
     desc: 'Synthesizes pure portal fluid from Kalaxian crystals and dark matter. Max limit: 12.',
     baseCost: { iron: 5000, minerals: 10000, darkMatter: 500 },
-    costRatio: 1.30,
+    costRatio: 1.12,
     category: 'production',
     maxLimit: 12
   }

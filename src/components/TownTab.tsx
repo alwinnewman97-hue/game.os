@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameState, JobType } from '../types';
 import { JOBS } from '../gameData';
 import { calculateJobStrengths } from '../store/useGameStore';
-import { playClickSound } from '../utils/audio';
+import { playClickSound, triggerHaptic } from '../utils/audio';
 import { 
   Smile, 
   Frown, 
@@ -16,7 +16,12 @@ import {
   Unlock,
   ChevronDown,
   ChevronUp,
-  RefreshCw
+  RefreshCw,
+  Info,
+  Filter,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface TownTabProps {
@@ -27,9 +32,19 @@ export default function TownTab({ store }: TownTabProps) {
   const kittens = Array.isArray(store.village?.kittens) ? store.village.kittens : [];
   const maxKittens = store.village?.maxKittens || 0;
   const isCompact = store.density === 'compact';
+  const [openInfo, setOpenInfo] = useState<Record<string, boolean>>({});
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [clonesOpen, setClonesOpen] = React.useState(kittens.length <= 5);
   const [presetName, setPresetName] = React.useState('');
+
+  const [filterJob, setFilterJob] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'level-desc' | 'level-asc' | 'name'>('level-desc');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when filters or sorting selection changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterJob, sortBy]);
 
   const jobCounts: Record<JobType | 'unemployed', number> = {
     farmer: 0,
@@ -607,6 +622,16 @@ export default function TownTab({ store }: TownTabProps) {
                       <span className={`font-medium tracking-wide theme-text-main leading-none transition-all ${
                         isCompact ? 'text-sm' : 'text-lg'
                       }`}>{job.name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenInfo(prev => ({ ...prev, [id]: !prev[id] }));
+                        }}
+                        className="p-1 rounded-full text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer inline-flex items-center justify-center shrink-0"
+                        title="View description"
+                      >
+                        <Info size={11} />
+                      </button>
                       {count > 0 && (
                         <span className={`font-mono font-bold theme-accent-bg leading-none rounded-sm ${
                           isCompact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
@@ -615,6 +640,11 @@ export default function TownTab({ store }: TownTabProps) {
                         </span>
                       )}
                     </div>
+                    {(!isCompact || openInfo[id]) && job.desc && (
+                      <p className={`theme-text-muted font-sans italic leading-snug transition-all ${
+                        isCompact ? 'text-[10px]' : 'text-xs'
+                      }`}>{job.desc}</p>
+                    )}
                     <span className={`text-emerald-500 font-mono leading-none ${isCompact ? 'text-[9px]' : 'text-[10px]'}`}>{job.effectsDesc}</span>
                     {count > 0 && jobStrengths[id as JobType] > count && (
                       <span className="text-[10px] text-emerald-400 font-mono leading-none mt-1">
@@ -662,91 +692,216 @@ export default function TownTab({ store }: TownTabProps) {
       </div>
 
       {/* INDIVIDUAL KITTENS POPULATION MATRIX */}
-      {kittens.length > 0 && (
-        <div className="mt-8 mx-2 sm:mx-6 select-none animate-fadeIn border theme-border rounded-xl theme-bg-card/30 overflow-hidden">
-          <div 
-            onClick={() => {
-              setClonesOpen(!clonesOpen);
-              if (store.soundEnabled) playClickSound('click');
-            }}
-            className="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-950/10 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Users size={14} className="text-cyan-400 shrink-0" />
-              <span className="text-[10px] sm:text-xs uppercase font-bold theme-text-main tracking-widest leading-none">
-                Portal Clone Directory ({kittens.length})
-              </span>
-            </div>
-            <div className="theme-text-muted hover:theme-text-main transition-colors">
-              {clonesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </div>
-          </div>
+      {kittens.length > 0 && (() => {
+        const filteredKittens = kittens.filter((kitten) => {
+          if (filterJob === 'all') return true;
+          if (filterJob === 'unemployed') return kitten.job === 'unemployed';
+          return kitten.job === filterJob;
+        });
 
-          {clonesOpen && (
-            <div className="p-3 sm:p-4 border-t theme-border">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 animate-fadeIn">
-                {kittens.map((kitten) => {
-                  const jobEmoji = 
-                    kitten.job === 'farmer' ? '🌱' : 
-                    kitten.job === 'woodcutter' ? '⚡' : 
-                    kitten.job === 'scholar' ? '🔬' : 
-                    kitten.job === 'miner' ? '⛏️' : 
-                    kitten.job === 'darkMatterScientist' ? '🌑' : 
-                    kitten.job === 'fluidEngineer' ? '🧪' : 
-                    kitten.job === 'priest' ? '🔊' : '💤';
+        const sortedKittens = [...filteredKittens].sort((a, b) => {
+          if (sortBy === 'level-desc') return b.level - a.level;
+          if (sortBy === 'level-asc') return a.level - b.level;
+          if (sortBy === 'name') {
+            const nameA = `${a.name} ${a.surname}`.toLowerCase();
+            const nameB = `${b.name} ${b.surname}`.toLowerCase();
+            return nameA.localeCompare(nameB);
+          }
+          return 0;
+        });
 
-                  return (
-                    <div 
-                      key={kitten.id}
-                      className="p-2 sm:p-2.5 border theme-border hover:theme-border-active transition-all theme-bg-card flex flex-row items-center justify-between gap-3 rounded-lg shadow-sm"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-base shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-slate-950/25">
-                          {jobEmoji}
-                        </span>
-                        <div className="min-w-0">
-                          <span className="font-bold text-[11px] sm:text-xs tracking-wide theme-text-main block truncate leading-tight">
-                            {kitten.name} {kitten.surname}
-                          </span>
-                          <span className="text-[9px] theme-text-muted font-mono block uppercase">
-                            GEN {kitten.level} • {kitten.trait || 'Normal'}
-                          </span>
-                        </div>
-                      </div>
+        const maxItemsPerPage = isCompact ? 8 : 12;
+        const totalItems = sortedKittens.length;
+        const totalPages = Math.ceil(totalItems / maxItemsPerPage) || 1;
+        const activePage = Math.min(currentPage, totalPages);
+        const startIndex = (activePage - 1) * maxItemsPerPage;
+        const paginatedKittens = sortedKittens.slice(startIndex, startIndex + maxItemsPerPage);
 
-                      {/* Job Dropdown Selection */}
-                      <select
-                        value={kitten.job}
-                        onChange={(e) => handleAssignJob(kitten.id, e.target.value as JobType | 'unemployed')}
-                        className="theme-bg-app border theme-border theme-text-main text-[10px] px-2 py-1 shrink-0 focus:outline-none focus:theme-border cursor-pointer font-sans rounded max-w-[110px] xs:max-w-[130px] text-right sm:text-left font-semibold"
-                      >
-                        <option value="unemployed">💤 Idle</option>
-                        <option value="farmer">🌱 Mega Seeds</option>
-                        <option value="woodcutter">⚡ Plutonium</option>
-                        {store.buildings.library > 0 && (
-                          <option value="scholar">🔬 Portal Tech</option>
-                        )}
-                        {store.unlocks.minerals && (
-                          <option value="miner">⛏️ Crystals</option>
-                        )}
-                        {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
-                          <option value="priest">🔊 Schwifty Vibes</option>
-                        )}
-                        {store.unlocks.darkMatter && (
-                          <option value="darkMatterScientist">🌑 Dark Matter</option>
-                        )}
-                        {store.unlocks.fluid && (
-                          <option value="fluidEngineer">🧪 Portal Fluid</option>
-                        )}
-                      </select>
-                    </div>
-                  );
-                })}
+        return (
+          <div className="mt-8 mx-2 sm:mx-6 select-none animate-fadeIn border theme-border rounded-xl theme-bg-card/30 overflow-hidden">
+            <div 
+              onClick={() => {
+                setClonesOpen(!clonesOpen);
+                if (store.soundEnabled) playClickSound('click');
+              }}
+              className="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-950/10 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-cyan-400 shrink-0" />
+                <span className="text-[10px] sm:text-xs uppercase font-bold theme-text-main tracking-widest leading-none">
+                  Portal Clone Directory ({kittens.length})
+                </span>
+              </div>
+              <div className="theme-text-muted hover:theme-text-main transition-colors">
+                {clonesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {clonesOpen && (
+              <div className="p-3 sm:p-4 border-t theme-border">
+                {/* Filters and Sort Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 pb-4 border-b theme-border">
+                  <div className="flex items-center gap-2">
+                    <Filter size={13} className="theme-text-muted shrink-0" />
+                    <select
+                      value={filterJob}
+                      onChange={(e) => {
+                        setFilterJob(e.target.value);
+                        if (store.soundEnabled) playClickSound('click');
+                      }}
+                      className="w-full theme-bg-app border theme-border theme-text-main text-[11px] px-2.5 py-1.5 focus:outline-none focus:theme-border cursor-pointer font-sans rounded font-semibold"
+                    >
+                      <option value="all">Filter: All Clones</option>
+                      <option value="unemployed">Filter: 💤 Idle</option>
+                      <option value="farmer">Filter: 🌱 Mega Seeds</option>
+                      <option value="woodcutter">Filter: ⚡ Plutonium</option>
+                      {store.buildings.library > 0 && (
+                        <option value="scholar">Filter: 🔬 Portal Tech</option>
+                      )}
+                      {store.unlocks.minerals && (
+                        <option value="miner">Filter: ⛏️ Crystals</option>
+                      )}
+                      {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
+                        <option value="priest">Filter: 🔊 Schwifty Vibes</option>
+                      )}
+                      {store.unlocks.darkMatter && (
+                        <option value="darkMatterScientist">Filter: 🌑 Dark Matter</option>
+                      )}
+                      {store.unlocks.fluid && (
+                        <option value="fluidEngineer">Filter: 🧪 Portal Fluid</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown size={13} className="theme-text-muted shrink-0" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => {
+                        setSortBy(e.target.value as any);
+                        if (store.soundEnabled) playClickSound('click');
+                      }}
+                      className="w-full theme-bg-app border theme-border theme-text-main text-[11px] px-2.5 py-1.5 focus:outline-none focus:theme-border cursor-pointer font-sans rounded font-semibold"
+                    >
+                      <option value="level-desc">Sort: Highest Gen (Level)</option>
+                      <option value="level-asc">Sort: Lowest Gen (Level)</option>
+                      <option value="name">Sort: Name (A-Z)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {paginatedKittens.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 animate-fadeIn">
+                    {paginatedKittens.map((kitten) => {
+                      const jobEmoji = 
+                        kitten.job === 'farmer' ? '🌱' : 
+                        kitten.job === 'woodcutter' ? '⚡' : 
+                        kitten.job === 'scholar' ? '🔬' : 
+                        kitten.job === 'miner' ? '⛏️' : 
+                        kitten.job === 'darkMatterScientist' ? '🌑' : 
+                        kitten.job === 'fluidEngineer' ? '🧪' : 
+                        kitten.job === 'priest' ? '🔊' : '💤';
+
+                      return (
+                        <div 
+                          key={kitten.id}
+                          className="p-2 sm:p-2.5 border theme-border hover:theme-border-active transition-all theme-bg-card flex flex-row items-center justify-between gap-3 rounded-lg shadow-sm"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-base shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-slate-950/25">
+                              {jobEmoji}
+                            </span>
+                            <div className="min-w-0">
+                              <span className="font-bold text-[11px] sm:text-xs tracking-wide theme-text-main block truncate leading-tight">
+                                {kitten.name} {kitten.surname}
+                              </span>
+                              <span className="text-[9px] theme-text-muted font-mono block uppercase">
+                                GEN {kitten.level} • {kitten.trait || 'Normal'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Job Dropdown Selection */}
+                          <select
+                            value={kitten.job}
+                            onChange={(e) => handleAssignJob(kitten.id, e.target.value as JobType | 'unemployed')}
+                            className="theme-bg-app border theme-border theme-text-main text-[10px] px-2 py-1 shrink-0 focus:outline-none focus:theme-border cursor-pointer font-sans rounded max-w-[110px] xs:max-w-[130px] text-right sm:text-left font-semibold"
+                          >
+                            <option value="unemployed">💤 Idle</option>
+                            <option value="farmer">🌱 Mega Seeds</option>
+                            <option value="woodcutter">⚡ Plutonium</option>
+                            {store.buildings.library > 0 && (
+                              <option value="scholar">🔬 Portal Tech</option>
+                            )}
+                            {store.unlocks.minerals && (
+                              <option value="miner">⛏️ Crystals</option>
+                            )}
+                            {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
+                              <option value="priest">🔊 Schwifty Vibes</option>
+                            )}
+                            {store.unlocks.darkMatter && (
+                              <option value="darkMatterScientist">🌑 Dark Matter</option>
+                            )}
+                            {store.unlocks.fluid && (
+                              <option value="fluidEngineer">🧪 Portal Fluid</option>
+                            )}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <span className="text-lg mb-1">🔍</span>
+                    <span className="text-[10px] uppercase tracking-widest font-black theme-text-muted">No clones match filters</span>
+                  </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t theme-border text-[9px] font-mono font-bold uppercase tracking-widest">
+                    <button
+                      disabled={activePage === 1}
+                      onClick={() => {
+                        setCurrentPage(prev => Math.max(1, prev - 1));
+                        if (store.soundEnabled) playClickSound('click');
+                      }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded border theme-border transition-all cursor-pointer ${
+                        activePage === 1 
+                          ? 'opacity-30 cursor-not-allowed theme-text-muted' 
+                          : 'theme-bg-hover hover:theme-bg-panel theme-text-main'
+                      }`}
+                    >
+                      <ChevronLeft size={11} />
+                      <span>Prev</span>
+                    </button>
+
+                    <span className="theme-text-muted font-bold text-[9px]">
+                      Page <span className="theme-text-main">{activePage}</span> of <span className="theme-text-main">{totalPages}</span>
+                    </span>
+
+                    <button
+                      disabled={activePage === totalPages}
+                      onClick={() => {
+                        setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                        if (store.soundEnabled) playClickSound('click');
+                      }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded border theme-border transition-all cursor-pointer ${
+                        activePage === totalPages 
+                          ? 'opacity-30 cursor-not-allowed theme-text-muted' 
+                          : 'theme-bg-hover hover:theme-bg-panel theme-text-main'
+                      }`}
+                    >
+                      <span>Next</span>
+                      <ChevronRight size={11} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
     </div>
   );

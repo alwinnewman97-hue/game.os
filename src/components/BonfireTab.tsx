@@ -15,7 +15,9 @@ import {
   ShieldAlert, 
   Activity, 
   Gauge,
-  ChevronDown
+  ChevronDown,
+  Info,
+  Zap
 } from 'lucide-react';
 
 interface BonfireTabProps {
@@ -27,6 +29,7 @@ type TabFilter = 'all' | 'production' | 'storage' | 'residential' | 'scientific'
 export default function BonfireTab({ store }: BonfireTabProps) {
   const [selectedSubTab, setSelectedSubTab] = useState<TabFilter>('all');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [openInfo, setOpenInfo] = useState<Record<string, boolean>>({});
   const isCompact = store.density === 'compact';
 
   const handleBuild = (id: BuildingType) => {
@@ -234,6 +237,17 @@ export default function BonfireTab({ store }: BonfireTabProps) {
                     }`}>
                       {b.name}
                     </h4>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenInfo(prev => ({ ...prev, [id]: !prev[id] }));
+                        triggerHaptic('click');
+                      }}
+                      className="p-1 rounded-full text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-all cursor-pointer inline-flex items-center justify-center shrink-0"
+                      title="View description"
+                    >
+                      <Info size={11} />
+                    </button>
                     {count > 0 && (
                       <span className={`font-mono font-bold theme-bg-card text-[#39ff14] border border-emerald-900/30 rounded ${
                         isCompact ? 'px-1 py-0.1 text-[8px]' : 'px-1.5 py-0.2 text-[9px]'
@@ -256,11 +270,13 @@ export default function BonfireTab({ store }: BonfireTabProps) {
                   </span>
                 </div>
 
-                <p className={`theme-text-muted font-sans leading-relaxed hidden sm:block transition-all ${
-                  isCompact ? 'text-[11px] leading-snug mt-0.5' : 'text-xs'
-                }`}>
-                  {b.desc}
-                </p>
+                {(!isCompact || openInfo[id]) && (
+                  <p className={`theme-text-muted font-sans leading-relaxed transition-all ${
+                    isCompact ? 'text-[11px] leading-snug mt-0.5' : 'text-xs'
+                  }`}>
+                    {b.desc}
+                  </p>
+                )}
 
                 {/* Calibrated Benefits Pill */}
                 <div className={`flex items-center gap-1 theme-text-sec font-mono transition-all ${
@@ -279,20 +295,42 @@ export default function BonfireTab({ store }: BonfireTabProps) {
                   {costsList}
                 </div>
 
-                <button
-                  onClick={() => handleBuild(id)}
-                  disabled={!canAfford && (isMaxed || exceedsLimit || !canAfford)}
-                  className={`w-full uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
-                    isCompact ? 'py-1.5 text-[10px]' : 'py-2 text-2xs'
-                  } ${
-                    canAfford 
-                      ? 'theme-accent-bg hover:opacity-90 font-extrabold shadow-sm' 
-                      : 'theme-bg-hover border theme-border theme-text-muted disabled:cursor-not-allowed font-medium'
-                  }`}
-                >
-                  <Plus size={12} />
-                  <span>{isMaxed ? 'MAX CAPACITY REACHED' : exceedsLimit ? 'EXCEEDS CAPACITY' : `Schematic ${multiplier > 1 ? `x${multiplier}` : ''}`}</span>
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleBuild(id)}
+                    disabled={!canAfford && (isMaxed || exceedsLimit || !canAfford)}
+                    className={`flex-1 uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
+                      isCompact ? 'py-1.5 text-[10px]' : 'py-2 text-2xs'
+                    } ${
+                      canAfford 
+                        ? 'theme-accent-bg hover:opacity-90 font-extrabold shadow-sm' 
+                        : 'theme-bg-hover border theme-border theme-text-muted disabled:cursor-not-allowed font-medium'
+                    }`}
+                  >
+                    <Plus size={12} />
+                    <span>{isMaxed ? 'MAX CAPACITY' : exceedsLimit ? 'EXCEEDS CAPACITY' : `Schematic ${multiplier > 1 ? `x${multiplier}` : ''}`}</span>
+                  </button>
+
+                  {/* Auto-Build Toggle integration on building card */}
+                  {store.unlocks.wood && (id === 'pasture' || id === 'barn' || (id === 'catnipField' && store.researched.agriculture)) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        store.toggleAutoBuild(id as 'pasture' | 'barn' | 'catnipField');
+                        triggerHaptic('click');
+                      }}
+                      className={`px-3 flex items-center justify-center gap-1 rounded-lg border transition-all cursor-pointer text-[10px] font-bold uppercase tracking-widest ${
+                        store.autoBuild?.[id as 'pasture' | 'barn' | 'catnipField']
+                          ? 'border-[#39ff14]/30 bg-[#39ff14]/10 text-[#39ff14]'
+                          : 'border-white/[0.05] theme-bg-hover theme-text-muted hover:theme-text-sec'
+                      }`}
+                      title={`Toggle Auto-Build for ${b.name}`}
+                    >
+                      <Zap size={11} className={store.autoBuild?.[id as 'pasture' | 'barn' | 'catnipField'] ? 'animate-pulse text-[#39ff14]' : ''} />
+                      <span className="text-[9px]">AUTO</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
             </div>
