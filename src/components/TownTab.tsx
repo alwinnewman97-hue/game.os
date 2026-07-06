@@ -740,58 +740,58 @@ export default function TownTab({ store }: TownTabProps) {
             {clonesOpen && (
               <div className="p-3 sm:p-4 border-t theme-border">
                 {/* Filters and Sort Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 pb-4 border-b theme-border">
-                  <div className="flex items-center gap-2">
-                    <Filter size={13} className="theme-text-muted shrink-0" />
+                <div className="grid grid-cols-2 gap-2 mb-3 pb-3 border-b theme-border">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Filter size={11} className="theme-text-muted shrink-0" />
                     <select
                       value={filterJob}
                       onChange={(e) => {
                         setFilterJob(e.target.value);
                         if (store.soundEnabled) playClickSound('click');
                       }}
-                      className="w-full theme-bg-app border theme-border theme-text-main text-[11px] px-2.5 py-1.5 focus:outline-none focus:theme-border cursor-pointer font-sans rounded font-semibold"
+                      className="w-full theme-bg-app border theme-border theme-text-main text-[10px] px-1.5 py-1 focus:outline-none focus:theme-border cursor-pointer font-sans rounded font-bold truncate"
                     >
-                      <option value="all">Filter: All Clones</option>
-                      <option value="unemployed">Filter: 💤 Idle</option>
-                      <option value="farmer">Filter: 🌱 Mega Seeds</option>
-                      <option value="woodcutter">Filter: ⚡ Plutonium</option>
+                      <option value="all">All Clones</option>
+                      <option value="unemployed">Idle</option>
+                      <option value="farmer">Seeds</option>
+                      <option value="woodcutter">Plutonium</option>
                       {store.buildings.library > 0 && (
-                        <option value="scholar">Filter: 🔬 Portal Tech</option>
+                        <option value="scholar">Tech</option>
                       )}
                       {store.unlocks.minerals && (
-                        <option value="miner">Filter: ⛏️ Crystals</option>
+                        <option value="miner">Crystals</option>
                       )}
                       {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
-                        <option value="priest">Filter: 🔊 Schwifty Vibes</option>
+                        <option value="priest">Vibes</option>
                       )}
                       {store.unlocks.darkMatter && (
-                        <option value="darkMatterScientist">Filter: 🌑 Dark Matter</option>
+                        <option value="darkMatterScientist">Dark Matter</option>
                       )}
                       {store.unlocks.fluid && (
-                        <option value="fluidEngineer">Filter: 🧪 Portal Fluid</option>
+                        <option value="fluidEngineer">Fluid</option>
                       )}
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown size={13} className="theme-text-muted shrink-0" />
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <ArrowUpDown size={11} className="theme-text-muted shrink-0" />
                     <select
                       value={sortBy}
                       onChange={(e) => {
                         setSortBy(e.target.value as any);
                         if (store.soundEnabled) playClickSound('click');
                       }}
-                      className="w-full theme-bg-app border theme-border theme-text-main text-[11px] px-2.5 py-1.5 focus:outline-none focus:theme-border cursor-pointer font-sans rounded font-semibold"
+                      className="w-full theme-bg-app border theme-border theme-text-main text-[10px] px-1.5 py-1 focus:outline-none focus:theme-border cursor-pointer font-sans rounded font-bold truncate"
                     >
-                      <option value="level-desc">Sort: Highest Gen (Level)</option>
-                      <option value="level-asc">Sort: Lowest Gen (Level)</option>
-                      <option value="name">Sort: Name (A-Z)</option>
+                      <option value="level-desc">Highest Gen</option>
+                      <option value="level-asc">Lowest Gen</option>
+                      <option value="name">Name (A-Z)</option>
                     </select>
                   </div>
                 </div>
 
                 {paginatedKittens.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 animate-fadeIn">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 animate-fadeIn">
                     {paginatedKittens.map((kitten) => {
                       const jobEmoji = 
                         kitten.job === 'farmer' ? '🌱' : 
@@ -805,47 +805,62 @@ export default function TownTab({ store }: TownTabProps) {
                       return (
                         <div 
                           key={kitten.id}
-                          className="p-2 sm:p-2.5 border theme-border hover:theme-border-active transition-all theme-bg-card flex flex-row items-center justify-between gap-3 rounded-lg shadow-sm"
+                          className="flex items-center justify-between py-2.5 px-1 border-b border-white/[0.04] last:border-none hover:bg-white/[0.01] transition-all"
                         >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-base shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-slate-950/25">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-sm shrink-0 w-6 h-6 flex items-center justify-center rounded bg-slate-950/25">
                               {jobEmoji}
                             </span>
                             <div className="min-w-0">
-                              <span className="font-bold text-[11px] sm:text-xs tracking-wide theme-text-main block truncate leading-tight">
-                                {kitten.name} {kitten.surname}
-                              </span>
-                              <span className="text-[9px] theme-text-muted font-mono block uppercase">
-                                GEN {kitten.level} • {kitten.trait || 'Normal'}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-[12px] tracking-wide theme-text-main truncate leading-tight">
+                                  {kitten.name} {kitten.surname}
+                                </span>
+                                <span className="text-[8px] font-mono theme-text-sec bg-cyan-500/10 border border-cyan-500/10 px-1 rounded-sm leading-none font-bold">
+                                  G{kitten.level}
+                                </span>
+                              </div>
+                              <span className="text-[9px] theme-text-muted font-mono uppercase tracking-wider leading-none mt-0.5 block">
+                                {kitten.trait || 'Standard'}
                               </span>
                             </div>
                           </div>
 
-                          {/* Job Dropdown Selection */}
-                          <select
-                            value={kitten.job}
-                            onChange={(e) => handleAssignJob(kitten.id, e.target.value as JobType | 'unemployed')}
-                            className="theme-bg-app border theme-border theme-text-main text-[10px] px-2 py-1 shrink-0 focus:outline-none focus:theme-border cursor-pointer font-sans rounded max-w-[110px] xs:max-w-[130px] text-right sm:text-left font-semibold"
-                          >
-                            <option value="unemployed">💤 Idle</option>
-                            <option value="farmer">🌱 Mega Seeds</option>
-                            <option value="woodcutter">⚡ Plutonium</option>
-                            {store.buildings.library > 0 && (
-                              <option value="scholar">🔬 Portal Tech</option>
-                            )}
-                            {store.unlocks.minerals && (
-                              <option value="miner">⛏️ Crystals</option>
-                            )}
-                            {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
-                              <option value="priest">🔊 Schwifty Vibes</option>
-                            )}
-                            {store.unlocks.darkMatter && (
-                              <option value="darkMatterScientist">🌑 Dark Matter</option>
-                            )}
-                            {store.unlocks.fluid && (
-                              <option value="fluidEngineer">🧪 Portal Fluid</option>
-                            )}
-                          </select>
+                          {/* Minimal Job Dropdown Selection */}
+                          <div className="flex items-center shrink-0">
+                            <select
+                              value={kitten.job}
+                              onChange={(e) => handleAssignJob(kitten.id, e.target.value as JobType | 'unemployed')}
+                              className="bg-transparent border-0 theme-text-sec text-[11px] font-bold tracking-wide pr-5 cursor-pointer focus:ring-0 focus:outline-none hover:theme-text-main transition-colors text-right font-sans outline-none select-none"
+                              style={{
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(156, 163, 175, 0.7)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: 'right center',
+                                paddingRight: '1rem',
+                              }}
+                            >
+                              <option value="unemployed" className="theme-bg-panel text-left">💤 Idle</option>
+                              <option value="farmer" className="theme-bg-panel text-left">🌱 Seeds</option>
+                              <option value="woodcutter" className="theme-bg-panel text-left">⚡ Plutonium</option>
+                              {store.buildings.library > 0 && (
+                                <option value="scholar" className="theme-bg-panel text-left">🔬 Tech</option>
+                              )}
+                              {store.unlocks.minerals && (
+                                <option value="miner" className="theme-bg-panel text-left">⛏️ Crystals</option>
+                              )}
+                              {store.unlocks.culture && store.buildings.amphitheatre > 0 && (
+                                <option value="priest" className="theme-bg-panel text-left">🔊 Vibes</option>
+                              )}
+                              {store.unlocks.darkMatter && (
+                                <option value="darkMatterScientist" className="theme-bg-panel text-left">🌑 Dark Matter</option>
+                              )}
+                              {store.unlocks.fluid && (
+                                <option value="fluidEngineer" className="theme-bg-panel text-left">🧪 Fluid</option>
+                              )}
+                            </select>
+                          </div>
                         </div>
                       );
                     })}
