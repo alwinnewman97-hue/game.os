@@ -45,7 +45,7 @@ export default function LeaderboardTab({ store }: LeaderboardTabProps) {
   const stats = store.lifetimeStats || { totalTimePlayed: 0, totalMortysBorn: 0, totalResourcesHarvested: 0 };
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto p-6 animate-fade-in">
+    <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto p-2 sm:p-6 animate-fade-in">
       {/* Statistics Section */}
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl font-black theme-text-main flex items-center gap-3">
@@ -134,44 +134,94 @@ export default function LeaderboardTab({ store }: LeaderboardTabProps) {
               No active pilots found in the Citadel Cloud.
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b theme-border text-xs uppercase tracking-widest theme-text-muted">
-                    <th className="pb-3 px-4 font-black w-16">Rank</th>
-                    <th className="pb-3 px-4 font-black">Pilot Name</th>
-                    <th className="pb-3 px-4 font-black">Dimension</th>
-                    <th className="pb-3 px-4 font-black">Time in Dimension</th>
-                    <th className="pb-3 px-4 font-black text-right">Portal Flux</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaders.map((leader, i) => (
-                    <tr 
-                      key={leader.id} 
-                      className="border-b theme-border last:border-0 hover:bg-black/5 transition-colors"
-                    >
-                      <td className="py-4 px-4 font-black theme-text-main">
-                        #{i + 1}
-                      </td>
-                      <td className="py-4 px-4 font-bold theme-text-main flex items-center gap-2">
-                        {leader.username}
-                      </td>
-                      <td className="py-4 px-4 text-sm theme-text-sec">
-                        {leader.currentDimension || 'Unknown'}
-                      </td>
-                      <td className="py-4 px-4 text-sm theme-text-muted font-mono flex items-center gap-1.5">
-                        <Clock size={12} />
-                        {formatTimeMs(leader.timeStayedMs || 0)}
-                      </td>
-                      <td className="py-4 px-4 text-right font-black text-[#00b0c8]">
-                        {leader.fluxScore?.toLocaleString() || 0}
-                      </td>
+            <>
+              {/* MOBILE CARDS VIEW */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {leaders.map((leader, i) => (
+                  <div
+                    key={leader.id}
+                    className="flex flex-col gap-2.5 p-4 rounded-xl border theme-border theme-bg-card/50 backdrop-blur-sm relative overflow-hidden"
+                  >
+                    {/* Top row: Rank + Username */}
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-black ${
+                          i === 0 
+                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
+                            : i === 1 
+                              ? 'bg-slate-300/20 text-slate-300 border border-slate-300/30' 
+                              : i === 2 
+                                ? 'bg-amber-700/20 text-amber-500 border border-amber-700/30' 
+                                : 'theme-bg-hover theme-text-muted border theme-border'
+                        }`}>
+                          #{i + 1}
+                        </span>
+                        <span className="font-bold text-sm theme-text-main">
+                          {leader.username}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[9px] uppercase font-bold theme-text-muted leading-none">Portal Flux</span>
+                        <span className="text-sm font-black text-[#00b0c8] font-mono leading-none mt-1">
+                          {leader.fluxScore?.toLocaleString() || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Meta info: Dimension + Time */}
+                    <div className="flex justify-between items-center text-[10px] theme-text-muted border-t theme-border pt-2 mt-1 font-mono">
+                      <div className="flex items-center gap-1">
+                        <span className="theme-text-sec font-sans text-[11px]">🌌 {leader.currentDimension || 'Unknown'}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock size={10} />
+                        <span>{formatTimeMs(leader.timeStayedMs || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE VIEW */}
+              <div className="w-full overflow-x-auto hidden md:block">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b theme-border text-xs uppercase tracking-widest theme-text-muted">
+                      <th className="pb-3 px-4 font-black w-16">Rank</th>
+                      <th className="pb-3 px-4 font-black">Pilot Name</th>
+                      <th className="pb-3 px-4 font-black">Dimension</th>
+                      <th className="pb-3 px-4 font-black">Time in Dimension</th>
+                      <th className="pb-3 px-4 font-black text-right">Portal Flux</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {leaders.map((leader, i) => (
+                      <tr 
+                        key={leader.id} 
+                        className="border-b theme-border last:border-0 hover:bg-black/5 transition-colors"
+                      >
+                        <td className="py-4 px-4 font-black theme-text-main">
+                          #{i + 1}
+                        </td>
+                        <td className="py-4 px-4 font-bold theme-text-main flex items-center gap-2">
+                          {leader.username}
+                        </td>
+                        <td className="py-4 px-4 text-sm theme-text-sec">
+                          {leader.currentDimension || 'Unknown'}
+                        </td>
+                        <td className="py-4 px-4 text-sm theme-text-muted font-mono flex items-center gap-1.5">
+                          <Clock size={12} />
+                          {formatTimeMs(leader.timeStayedMs || 0)}
+                        </td>
+                        <td className="py-4 px-4 text-right font-black text-[#00b0c8]">
+                          {leader.fluxScore?.toLocaleString() || 0}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

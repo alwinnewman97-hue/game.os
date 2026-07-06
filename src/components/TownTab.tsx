@@ -503,14 +503,14 @@ export default function TownTab({ store }: TownTabProps) {
                     const isEssential = store.essentialJobs?.[jobId] ?? false;
 
                     return (
-                      <div key={jobId} className="flex items-center justify-between gap-3 bg-slate-950/20 border theme-border rounded-lg p-2.5 hover:bg-slate-950/40 transition-all">
-                        <div className="flex flex-col min-w-[100px]">
+                      <div key={jobId} className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 bg-slate-950/20 border theme-border rounded-lg p-2 sm:p-2.5 hover:bg-slate-950/40 transition-all">
+                        <div className="flex flex-col flex-1 min-w-[80px]">
                           <span className="text-xs font-bold theme-text-main">{jobDef.name}</span>
                           <span className="text-[10px] theme-text-muted leading-none">Current: {jobCounts[jobId] || 0} Clones</span>
                         </div>
 
                         {/* WEIGHT CONTROL */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             disabled={currentWeight <= 0}
                             onClick={() => {
@@ -521,9 +521,9 @@ export default function TownTab({ store }: TownTabProps) {
                               currentWeight <= 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'
                             }`}
                           >
-                            <Minus size={12} />
+                            <Minus size={11} />
                           </button>
-                          <div className="flex flex-col items-center justify-center min-w-[24px]">
+                          <div className="flex flex-col items-center justify-center min-w-[20px]">
                             <span className="text-xs font-mono font-bold theme-text-main">{currentWeight}</span>
                             <span className="text-[8px] theme-text-muted">weight</span>
                           </div>
@@ -537,7 +537,7 @@ export default function TownTab({ store }: TownTabProps) {
                               currentWeight >= 10 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'
                             }`}
                           >
-                            <Plus size={12} />
+                            <Plus size={11} />
                           </button>
                         </div>
 
@@ -547,7 +547,7 @@ export default function TownTab({ store }: TownTabProps) {
                             store.toggleEssentialJob(jobId);
                             if (store.soundEnabled) playClickSound('click');
                           }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                          className={`flex items-center gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-md border text-[9px] sm:text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                             isEssential
                               ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.15)]'
                               : 'border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'

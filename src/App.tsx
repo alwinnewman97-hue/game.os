@@ -32,6 +32,7 @@ import {
   Trophy,
 } from "lucide-react";
 
+import TopControls from "./components/TopControls";
 import ResourcePanel from "./components/ResourcePanel";
 import BonfireTab from "./components/BonfireTab";
 import TownTab from "./components/TownTab";
@@ -531,10 +532,10 @@ export default function App() {
             <Flame size={24} className="theme-text-main" />
           </div>
 
-          <div className="flex flex-row md:flex-col gap-1 md:gap-1.5 w-full justify-around md:justify-start px-1 md:px-4">
+          <div className="flex flex-row md:flex-col gap-1.5 md:gap-1.5 w-full overflow-x-auto scrollbar-none justify-start md:justify-start px-2 md:px-4 shrink-0 pb-1 md:pb-0">
             <button
               onClick={() => handleTabChange("bonfire")}
-              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "bonfire"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -559,7 +560,7 @@ export default function App() {
             {store.unlocks.village && (
               <button
                 onClick={() => handleTabChange("town")}
-                className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === "town"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
@@ -585,7 +586,7 @@ export default function App() {
             {store.unlocks.science && (
               <button
                 onClick={() => handleTabChange("science")}
-                className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === "science"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
@@ -611,7 +612,7 @@ export default function App() {
             {store.unlocks.workshop && (
               <button
                 onClick={() => handleTabChange("upgrades")}
-                className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+                className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                   activeTab === "upgrades"
                     ? "portal-tab-btn-active scale-100"
                     : "theme-text-muted scale-95"
@@ -636,7 +637,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("achievements")}
-              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "achievements"
                   ? "portal-tab-btn-active scale-100"
                   : "text-[#39ff14]/90 scale-95"
@@ -660,7 +661,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("leaderboard")}
-              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "leaderboard"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -684,7 +685,7 @@ export default function App() {
 
             <button
               onClick={() => handleTabChange("settings")}
-              className={`p-3.5 sm:p-3 md:py-4 md:w-full rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
+              className={`px-3 py-2 sm:px-3 sm:py-3 md:py-4 min-w-[65px] sm:min-w-[80px] md:min-w-0 shrink-0 rounded-xl sm:rounded-2xl flex flex-col items-center gap-1 sm:gap-2 text-xs font-bold uppercase tracking-widest cursor-pointer portal-tab-btn relative ${
                 activeTab === "settings"
                   ? "portal-tab-btn-active scale-100"
                   : "theme-text-muted scale-95"
@@ -728,8 +729,8 @@ export default function App() {
         <header
           className={`w-full shrink-0 transition-all duration-300 z-20 relative flex flex-col ${
             store.density === "compact"
-              ? "pt-3 sm:pt-4 px-4 sm:px-6 gap-2.5"
-              : "pt-8 sm:pt-10 px-5 sm:px-10 gap-6"
+              ? "pt-2 sm:pt-4 px-3 sm:px-6 gap-2"
+              : "pt-4 sm:pt-10 px-4 sm:px-10 gap-4"
           }`}
         >
           <div className="flex justify-between items-end relative">
@@ -750,50 +751,16 @@ export default function App() {
                       ? "Upgrades"
                       : "Badges"}
             </h1>
-
             {/* Spacing element to push controls to the right */}
             <div className="flex-1"></div>
-
-            <div className="flex items-center gap-4 z-10">
-              <button
-                onClick={() => {
-                  const nextSpeed = store.gameSpeed === 0 ? 1 : 0;
-                  store.setGameSpeed(nextSpeed);
-                  if (store.soundEnabled) playClickSound("click");
-                }}
-                className={`p-2.5 rounded-xl theme-bg-card border theme-border transition-all shadow-sm flex items-center gap-1.5 cursor-pointer ${
-                  store.gameSpeed === 0
-                    ? "text-amber-500 border-amber-500/30 bg-amber-500/5 animate-pulse"
-                    : "theme-text-sec hover:theme-text-main"
-                }`}
-                title={store.gameSpeed === 0 ? "Resume Game" : "Pause Game"}
-              >
-                {store.gameSpeed === 0 ? <Play size={15} /> : <Pause size={15} />}
-                <span className="text-[11px] font-black font-sans uppercase tracking-wider">
-                  {store.gameSpeed === 0 ? "Paused" : "Pause"}
-                </span>
-              </button>
+            <div className="z-20 relative pt-1 sm:pt-2">
+              <TopControls store={store} />
             </div>
           </div>
-
-          {/* FLOATING TOP RESOURCES HUD */}
-          <div className="z-20 w-full animate-fade-in relative mt-2 mb-2">
-            <ResourcePanel
-              store={store}
-              catnipRate={computedCatnipRate}
-              woodRate={computedWoodRate}
-              scienceRate={computedScienceRate}
-              mineralsRate={computedMineralsRate}
-              cultureRate={computedCultureRate}
-              ironRate={computedIronRate}
-              darkMatterRate={computedDarkMatterRate}
-              portalFluidRate={computedPortalFluidRate}
-            />
-          </div>
-
+          
           {/* ANOMALY ALERT SYSTEM */}
           {store.activeAnomaly && (
-            <div className="z-20 w-full animate-bounce theme-bg-card border-2 border-red-500/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_20px_rgba(239,68,68,0.25)] backdrop-blur-md mb-2 relative overflow-hidden">
+            <div className="z-20 w-full animate-bounce theme-bg-card border-2 border-red-500/80 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 shadow-[0_0_20px_rgba(239,68,68,0.25)] backdrop-blur-md mb-2 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-red-950/30">
                 <div
                   className="h-full bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 transition-all duration-300"
@@ -802,37 +769,35 @@ export default function App() {
                   }}
                 />
               </div>
-
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-500 shrink-0 select-none animate-pulse">
-                  <ShieldAlert size={26} />
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-1.5 sm:p-3 bg-red-950/40 border border-red-500/30 rounded-lg sm:rounded-xl text-red-500 shrink-0 select-none animate-pulse">
+                  <ShieldAlert size={20} className="sm:w-[26px] sm:h-[26px]" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase text-red-500 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full tracking-widest leading-none">
-                      Warning: Dimensional Anomaly
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-[8px] sm:text-[10px] font-black uppercase text-red-500 bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 rounded-full tracking-widest leading-none">
+                      Warning
                     </span>
-                    <span className="text-xs font-mono font-bold text-red-400">
+                    <span className="text-[10px] sm:text-xs font-mono font-bold text-red-400">
                       {Math.ceil(store.activeAnomaly.durationLeft)}s Left
                     </span>
                   </div>
-                  <h4 className="text-lg font-black theme-text-main uppercase tracking-tight mt-1 flex items-center gap-1.5">
+                  <h4 className="text-sm sm:text-lg font-black theme-text-main uppercase tracking-tight mt-0.5 sm:mt-1 flex items-center gap-1.5">
                     {store.activeAnomaly.name}
                   </h4>
-                  <p className="theme-text-muted text-xs font-medium max-w-sm mt-0.5">
+                  <p className="theme-text-muted text-[10px] sm:text-xs font-medium max-w-sm mt-0.5 leading-tight">
                     {store.activeAnomaly.desc}
                   </p>
                 </div>
               </div>
-
               {/* ACTION AREA */}
-              <div className="flex flex-row gap-2 w-full sm:w-auto shrink-0">
+              <div className="flex flex-row gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
                 <button
                   onClick={() => {
                     store.defuseAnomalyClick();
                     if (store.soundEnabled) playClickSound("click");
                   }}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 theme-text-main font-black text-xs uppercase tracking-wider px-4 py-3 rounded-xl shadow-lg border border-red-400 transition-all cursor-pointer group"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 theme-text-main font-black text-[10px] sm:text-xs uppercase tracking-wider px-2 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl shadow-lg border border-red-400 transition-all cursor-pointer group"
                 >
                   <Hand
                     size={14}
@@ -847,7 +812,7 @@ export default function App() {
                     if (store.soundEnabled) playClickSound("success");
                   }}
                   disabled={(store.resources.wood?.amount ?? 0) < 40}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 theme-bg-card hover:bg-neutral-800 disabled:opacity-40 disabled:hover:theme-bg-card border theme-border hover:border-neutral-500 theme-text-main text-xs font-black uppercase tracking-wider px-4 py-3 rounded-xl transition-all cursor-pointer"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 theme-bg-card hover:bg-neutral-800 disabled:opacity-40 disabled:hover:theme-bg-card border theme-border hover:border-neutral-500 theme-text-main text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl transition-all cursor-pointer"
                 >
                   <Zap size={14} className="text-yellow-400" />
                   Direct Shield (40 Plutonium)
@@ -857,24 +822,62 @@ export default function App() {
           )}
         </header>
 
-        {/* ACTIVE TAB CONTENT WINDOW */}
-        <div
-          className={`flex-1 overflow-x-hidden overflow-y-auto pb-32 md:pb-12 pt-1.5 relative z-10 scrollbar-none transition-all duration-300 ${
-            store.density === "compact" ? "px-4 sm:px-6" : "px-5 sm:px-10"
-          }`}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="w-full"
+        <div className={`flex-1 overflow-hidden relative z-10 w-full flex flex-col md:flex-row transition-all duration-300 gap-2 md:gap-4 lg:gap-8 ${
+            store.density === "compact" ? "pt-1 sm:pt-2" : "pt-2 sm:pt-4"
+          }`}>
+            
+            {/* LEFT SIDEBAR RESOURCES */}
+            <div className={`w-full md:w-56 shrink-0 h-full overflow-y-auto pr-2 scrollbar-none hidden md:flex flex-col ${
+                store.density === "compact" ? "pl-4 sm:pl-6" : "pl-5 sm:pl-10"
+              }`}>
+              <ResourcePanel
+                store={store}
+                catnipRate={computedCatnipRate}
+                woodRate={computedWoodRate}
+                scienceRate={computedScienceRate}
+                mineralsRate={computedMineralsRate}
+                cultureRate={computedCultureRate}
+                ironRate={computedIronRate}
+                darkMatterRate={computedDarkMatterRate}
+                portalFluidRate={computedPortalFluidRate}
+              />
+            </div>
+
+            {/* ACTIVE TAB CONTENT WINDOW */}
+            <div
+              className={`flex-1 overflow-x-hidden overflow-y-auto pb-32 md:pb-12 relative z-10 scrollbar-none transition-all duration-300 ${
+                store.density === "compact" ? "px-2 sm:px-6 md:pl-0" : "px-3 sm:px-10 md:pl-0"
+              }`}
             >
-              {currentTabComponent()}
-            </motion.div>
-          </AnimatePresence>
+              <div className={`w-full md:hidden pb-3 pt-1.5 mb-3 border-b theme-border transition-all duration-300 ${
+                store.density === "compact" ? "" : "px-1"
+              }`}>
+                <ResourcePanel
+                  store={store}
+                  catnipRate={computedCatnipRate}
+                  woodRate={computedWoodRate}
+                  scienceRate={computedScienceRate}
+                  mineralsRate={computedMineralsRate}
+                  cultureRate={computedCultureRate}
+                  ironRate={computedIronRate}
+                  darkMatterRate={computedDarkMatterRate}
+                  portalFluidRate={computedPortalFluidRate}
+                />
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="w-full"
+                >
+                  {currentTabComponent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
         </div>
       </main>
     </div>

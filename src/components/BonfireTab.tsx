@@ -156,7 +156,7 @@ export default function BonfireTab({ store }: BonfireTabProps) {
       </div>
 
       {/* SECURE SCHEMATICS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
         {(Object.entries(BUILDINGS) as [BuildingType, typeof BUILDINGS[BuildingType]][]).map(([id, b]) => {
           // Pre-requisites checks for tidy, progressive disclosure
           if (id === 'aqueduct' && !store.researched.agriculture) return null;
@@ -218,8 +218,8 @@ export default function BonfireTab({ store }: BonfireTabProps) {
           return (
             <div 
               key={id}
-              className={`flex flex-col justify-between transition-all duration-300 border rounded-xl theme-bg-panel backdrop-blur-sm relative ${
-                isCompact ? 'p-3.5 gap-2.5' : 'p-5 gap-4'
+              className={`flex flex-col justify-between transition-all duration-300 border rounded-lg sm:rounded-xl theme-bg-panel backdrop-blur-sm relative ${
+                isCompact ? 'p-2 sm:p-3.5 gap-2 sm:gap-2.5' : 'p-3 sm:p-5 gap-2 sm:gap-4'
               } ${
                 canAfford 
                   ? 'border-neutral-900 hover:theme-border/65 shadow-sm' 

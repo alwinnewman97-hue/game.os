@@ -92,7 +92,7 @@ export default function SettingsTab({ store }: SettingsTabProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-lg mx-auto p-6 animate-fade-in">
+    <div className="flex flex-col gap-6 w-full max-w-lg mx-auto p-2 sm:p-6 animate-fade-in">
       <h2 className="text-2xl font-black theme-text-main flex items-center gap-3">
         <Settings className="text-[#39ff14] drop-shadow-md" />
         Multiversal Settings

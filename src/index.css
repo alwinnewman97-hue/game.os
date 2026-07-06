@@ -133,3 +133,12 @@ body {
 :root .border-\[\#39ff14\]\/20 { border-color: color-mix(in srgb, var(--accent-color) 20%, transparent) !important; }
 :root .border-\[\#39ff14\]\/60 { border-color: color-mix(in srgb, var(--accent-color) 60%, transparent) !important; }
 
+/* Hide scrollbar for Chrome, Safari, Opera and Firefox/Edge */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
