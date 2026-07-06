@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GameState, JobType } from '../types';
 import { JOBS } from '../gameData';
-import { calculateJobStrengths } from '../store/useGameStore';
+import { calculateJobStrengths, getCloneSuitabilityScore } from '../store/useGameStore';
 import { playClickSound, triggerHaptic } from '../utils/audio';
 import { 
   Smile, 
@@ -72,7 +72,10 @@ export default function TownTab({ store }: TownTabProps) {
   };
 
   const handleAssignMultiple = (job: JobType, countToAssign: number) => {
-    const idleKittens = kittens.filter(k => k.job === 'unemployed').slice(0, countToAssign);
+    const idleKittens = kittens
+      .filter(k => k.job === 'unemployed')
+      .sort((a, b) => getCloneSuitabilityScore(b, job) - getCloneSuitabilityScore(a, job))
+      .slice(0, countToAssign);
     if (idleKittens.length > 0) {
       store.assignJobsMultiple(idleKittens.map(k => k.id), job);
       if (store.soundEnabled) playClickSound('click');
@@ -80,7 +83,10 @@ export default function TownTab({ store }: TownTabProps) {
   };
 
   const handleUnassignMultiple = (job: JobType, countToUnassign: number) => {
-    const assignedKittens = kittens.filter(k => k.job === job).slice(0, countToUnassign);
+    const assignedKittens = kittens
+      .filter(k => k.job === job)
+      .sort((a, b) => getCloneSuitabilityScore(a, job) - getCloneSuitabilityScore(b, job))
+      .slice(0, countToUnassign);
     if (assignedKittens.length > 0) {
       store.assignJobsMultiple(assignedKittens.map(k => k.id), 'unemployed');
       if (store.soundEnabled) playClickSound('click');
@@ -156,8 +162,8 @@ export default function TownTab({ store }: TownTabProps) {
 
     const totalScore = availableJobs.reduce((sum, j) => sum + j.score, 0);
 
+    // Fallback: if total score is <= 0, distribute evenly based on suitability
     if (totalScore <= 0) {
-      // Fallback: distribute evenly
       const count = availableJobs.length;
       idleKittensList.forEach((k, idx) => {
         const jobToAssign = availableJobs[idx % count].job;
@@ -165,6 +171,38 @@ export default function TownTab({ store }: TownTabProps) {
       });
       return;
     }
+
+    const jobsWithShares = availableJobs.map(j => {
+      const idealShare = (j.score / totalScore) * idleKittensList.length;
+      return {
+        job: j.job,
+        idealShare,
+        floorShare: Math.floor(idealShare)
+      };
+    });
+
+    // We list all the target job slots we need to fill
+    const requiredSlots: JobType[] = [];
+    jobsWithShares.forEach(js => {
+      const toAssign = js.floorShare;
+      for (let i = 0; i < toAssign; i++) {
+        requiredSlots.push(js.job);
+      }
+    });
+
+    const remainders = jobsWithShares
+      .map(js => ({ job: js.job, rem: js.idealShare - js.floorShare }))
+      .sort((a, b) => b.rem - a.rem);
+
+    const neededRemaining = idleKittensList.length - requiredSlots.length;
+    for (let i = 0; i < neededRemaining; i++) {
+      const remJob = remainders[i % remainders.length].job;
+      requiredSlots.push(remJob);
+    }
+
+    // Now match idle clones to required slots to maximize suitability
+    const availableClones = [...idleKittensList];
+    const slotsToFill = [...requiredSlots];
 
     const assignments: Record<JobType, string[]> = {
       farmer: [],
@@ -176,37 +214,62 @@ export default function TownTab({ store }: TownTabProps) {
       fluidEngineer: []
     };
 
-    let assignedCount = 0;
-    const jobsWithShares = availableJobs.map(j => {
-      const idealShare = (j.score / totalScore) * idleKittensList.length;
-      return {
-        job: j.job,
-        idealShare,
-        floorShare: Math.floor(idealShare)
-      };
-    });
+    // Pass 1: Perfect Trait Match (specialized clones get priority)
+    const traitToJobMap: Record<string, JobType> = {
+      'High Anxiety': 'farmer',
+      'Adrenaline Rush': 'woodcutter',
+      'Wubba Lubba': 'scholar',
+      'Sub-atomic': 'miner',
+      'Ultra-Schwifty': 'priest'
+    };
 
-    // First pass: assign the floor count
-    jobsWithShares.forEach(js => {
-      const toAssign = js.floorShare;
-      for (let i = 0; i < toAssign; i++) {
-        if (assignedCount < idleKittensList.length) {
-          assignments[js.job].push(idleKittensList[assignedCount].id);
-          assignedCount++;
+    for (let cIdx = availableClones.length - 1; cIdx >= 0; cIdx--) {
+      const clone = availableClones[cIdx];
+      let matchedJob: JobType | null = null;
+      if (clone.trait) {
+        Object.entries(traitToJobMap).forEach(([traitKeyword, jobName]) => {
+          if (clone.trait.includes(traitKeyword)) {
+            matchedJob = jobName;
+          }
+        });
+      }
+
+      if (matchedJob) {
+        const slotIdx = slotsToFill.indexOf(matchedJob);
+        if (slotIdx !== -1) {
+          assignments[matchedJob].push(clone.id);
+          availableClones.splice(cIdx, 1);
+          slotsToFill.splice(slotIdx, 1);
         }
       }
-    });
-
-    // Second pass: distribute the remaining fraction to jobs with highest decimals
-    const remainders = jobsWithShares
-      .map(js => ({ job: js.job, rem: js.idealShare - js.floorShare }))
-      .sort((a, b) => b.rem - a.rem);
-
-    for (let i = 0; i < remainders.length; i++) {
-      if (assignedCount >= idleKittensList.length) break;
-      assignments[remainders[i].job].push(idleKittensList[assignedCount].id);
-      assignedCount++;
     }
+
+    // Pass 2: Best of the Rest
+    // Sort remaining slots so that bottleneck/higher scoring jobs get the best choice of remaining clones
+    const jobScoresMap = availableJobs.reduce((acc, curr) => {
+      acc[curr.job] = curr.score;
+      return acc;
+    }, {} as Record<JobType, number>);
+
+    slotsToFill.sort((a, b) => (jobScoresMap[b] ?? 0) - (jobScoresMap[a] ?? 0));
+
+    slotsToFill.forEach(job => {
+      if (availableClones.length === 0) return;
+      
+      let bestCloneIdx = 0;
+      let maxScore = -1;
+      availableClones.forEach((clone, idx) => {
+        const score = getCloneSuitabilityScore(clone, job);
+        if (score > maxScore) {
+          maxScore = score;
+          bestCloneIdx = idx;
+        }
+      });
+
+      const chosenClone = availableClones[bestCloneIdx];
+      assignments[job].push(chosenClone.id);
+      availableClones.splice(bestCloneIdx, 1);
+    });
 
     // Batch assign in store
     Object.entries(assignments).forEach(([job, ids]) => {

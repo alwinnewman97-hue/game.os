@@ -168,6 +168,27 @@ export const calculateCost = (baseCost: number, ratio: number, amount: number) =
   return baseCost * Math.pow(ratio, amount);
 };
 
+export function getCloneSuitabilityScore(k: Kitten, job: JobType): number {
+  // Base strength is 1.0. Plus 5% per level above 1
+  let multiplier = 1 + (k.level - 1) * 0.05;
+
+  // Trait-specific bonuses (+10%)
+  if (k.trait) {
+    if (job === 'farmer' && k.trait.includes('High Anxiety')) {
+      multiplier += 0.10;
+    } else if (job === 'woodcutter' && k.trait.includes('Adrenaline Rush')) {
+      multiplier += 0.10;
+    } else if (job === 'scholar' && k.trait.includes('Wubba Lubba')) {
+      multiplier += 0.10;
+    } else if (job === 'miner' && k.trait.includes('Sub-atomic')) {
+      multiplier += 0.10;
+    } else if (job === 'priest' && k.trait.includes('Ultra-Schwifty')) {
+      multiplier += 0.10;
+    }
+  }
+  return multiplier;
+}
+
 export function calculateJobStrengths(kittens: Kitten[]): Record<JobType, number> {
   const strengths: Record<JobType, number> = {
     farmer: 0,
@@ -183,25 +204,7 @@ export function calculateJobStrengths(kittens: Kitten[]): Record<JobType, number
 
   kittens.forEach(k => {
     if (k.job !== 'unemployed' && strengths[k.job] !== undefined) {
-      // Base strength is 1.0. Plus 5% per level above 1
-      let multiplier = 1 + (k.level - 1) * 0.05;
-
-      // Trait-specific bonuses (+10%)
-      if (k.trait) {
-        if (k.job === 'farmer' && k.trait.includes('High Anxiety')) {
-          multiplier += 0.10;
-        } else if (k.job === 'woodcutter' && k.trait.includes('Adrenaline Rush')) {
-          multiplier += 0.10;
-        } else if (k.job === 'scholar' && k.trait.includes('Wubba Lubba')) {
-          multiplier += 0.10;
-        } else if (k.job === 'miner' && k.trait.includes('Sub-atomic')) {
-          multiplier += 0.10;
-        } else if (k.job === 'priest' && k.trait.includes('Ultra-Schwifty')) {
-          multiplier += 0.10;
-        }
-      }
-
-      strengths[k.job] += multiplier;
+      strengths[k.job] += getCloneSuitabilityScore(k, k.job);
     }
   });
 
